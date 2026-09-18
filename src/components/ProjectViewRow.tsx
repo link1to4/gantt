@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Check, FolderKanban, ChevronDown, ChevronRight, Calendar, Coffee, Moon } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, FolderKanban, ChevronDown, ChevronRight, Calendar, Coffee, Moon, Copy, Download } from 'lucide-react';
 import { DaySchedule, Project, Task } from '../types';
 import { 
   START_HOUR, 
@@ -26,6 +26,8 @@ interface ProjectViewRowProps {
   onUpdateTask: (dayId: string, taskId: string, updates: Partial<Task>) => void;
   onDeleteTask: (dayId: string, taskId: string) => void;
   onOpenEditModal: (dayId: string, task: Task) => void;
+  onDuplicateProject?: (projectId: string) => void;
+  onExportProject?: (projectId: string) => void;
 }
 
 export const ProjectViewRow: React.FC<ProjectViewRowProps> = ({
@@ -41,6 +43,8 @@ export const ProjectViewRow: React.FC<ProjectViewRowProps> = ({
   onUpdateTask,
   onDeleteTask,
   onOpenEditModal,
+  onDuplicateProject,
+  onExportProject,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const TASK_ROW_HEIGHT = 44;
@@ -103,13 +107,39 @@ export const ProjectViewRow: React.FC<ProjectViewRowProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={() => onAddTaskToDay(days[0]?.id || '', 9, project.id)}
-          className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 px-2.5 py-1 rounded transition flex items-center gap-1"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>新增此專案項目</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onDuplicateProject && (
+            <button
+              type="button"
+              onClick={() => onDuplicateProject(project.id)}
+              className="text-xs font-medium text-slate-400 hover:text-indigo-300 hover:bg-slate-800 px-2 py-1 rounded transition flex items-center gap-1"
+              title="一鍵複製此專案與所有排程項目"
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">複製專案</span>
+            </button>
+          )}
+
+          {onExportProject && (
+            <button
+              type="button"
+              onClick={() => onExportProject(project.id)}
+              className="text-xs font-medium text-slate-400 hover:text-emerald-300 hover:bg-slate-800 px-2 py-1 rounded transition flex items-center gap-1"
+              title="匯出專案 JSON 檔案"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">匯出</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => onAddTaskToDay(days[0]?.id || '', 9, project.id)}
+            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 px-2.5 py-1 rounded transition flex items-center gap-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>新增此專案項目</span>
+          </button>
+        </div>
       </div>
 
       {/* Sub-rows: Each Day for this Project */}

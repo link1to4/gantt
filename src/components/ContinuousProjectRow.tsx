@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, FolderKanban } from 'lucide-react';
+import { Plus, FolderKanban, Copy, Download } from 'lucide-react';
 import { Project, DaySchedule, Task } from '../types';
 import { 
   START_HOUR, 
@@ -31,6 +31,8 @@ interface ContinuousProjectRowProps {
     newStartHour: number,
     newDuration?: number
   ) => void;
+  onDuplicateProject?: (projectId: string) => void;
+  onExportProject?: (projectId: string) => void;
 }
 
 const TASK_ROW_HEIGHT = 44;
@@ -47,6 +49,8 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
   onDeleteTask,
   onOpenEditModal,
   onMoveTaskAcrossDays,
+  onDuplicateProject,
+  onExportProject,
 }) => {
   const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
   const totalTimelineWidth = days.length * dayWidth;
@@ -118,14 +122,46 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
         className="sticky left-0 bg-slate-900/98 border-r border-slate-800 p-3 flex flex-col justify-between z-20 shadow-md backdrop-blur-xs flex-shrink-0"
       >
         <div>
-          <div className="flex items-center gap-2">
-            <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorMeta.bg}`} />
-            <span
-              className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
-              title={project.name}
-            >
-              {project.name}
-            </span>
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorMeta.bg}`} />
+              <span
+                className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
+                title={project.name}
+              >
+                {project.name}
+              </span>
+            </div>
+
+            {/* Quick action buttons: Duplicate & Export */}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              {onDuplicateProject && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDuplicateProject(project.id);
+                  }}
+                  className="p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-800 transition"
+                  title="一鍵複製此專案與所有項目"
+                >
+                  <Copy className="w-3 h-3" />
+                </button>
+              )}
+              {onExportProject && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onExportProject(project.id);
+                  }}
+                  className="p-1 rounded text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition"
+                  title="匯出專案 JSON 檔案"
+                >
+                  <Download className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Project statistics across all days */}

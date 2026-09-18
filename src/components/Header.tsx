@@ -9,7 +9,9 @@ import {
   Layers,
   Filter,
   Coffee,
-  Moon
+  Moon,
+  Upload,
+  DownloadCloud
 } from 'lucide-react';
 import { DaySchedule, Project, ViewGroupingMode, ZoomLevel } from '../types';
 import { ZOOM_CONFIG } from '../constants';
@@ -31,6 +33,8 @@ interface HeaderProps {
   onAddDay: () => void;
   onOpenNewTaskModal: (targetDayId?: string, targetProjectId?: string) => void;
   onOpenProjectModal: () => void;
+  onOpenImportModal?: () => void;
+  onExportAllProjects?: () => void;
   onResetData: () => void;
   onToggleHelp: () => void;
 }
@@ -51,6 +55,8 @@ export const Header: React.FC<HeaderProps> = ({
   onAddDay,
   onOpenNewTaskModal,
   onOpenProjectModal,
+  onOpenImportModal,
+  onExportAllProjects,
   onResetData,
   onToggleHelp,
 }) => {
@@ -209,11 +215,35 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onOpenProjectModal}
               className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5 active:scale-95"
-              title="新增或修改專案維度"
+              title="專案維度管理、複製與個別匯出"
             >
               <FolderKanban className="w-3.5 h-3.5 text-amber-400" />
               <span>管理專案 ({projects.length})</span>
             </button>
+
+            {/* Quick Import Project Button */}
+            {onOpenImportModal && (
+              <button
+                onClick={onOpenImportModal}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5 active:scale-95"
+                title="匯入專案檔案 (JSON)"
+              >
+                <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">匯入專案</span>
+              </button>
+            )}
+
+            {/* Quick Backup/Export All Button */}
+            {onExportAllProjects && (
+              <button
+                onClick={onExportAllProjects}
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center gap-1.5 active:scale-95"
+                title="匯出全專案排程備份檔 (JSON)"
+              >
+                <DownloadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">備份全部</span>
+              </button>
+            )}
 
             {/* Help button */}
             <button

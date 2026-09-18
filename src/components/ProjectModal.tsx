@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FolderPlus, Trash2, Edit2, Check, Tag, Plus, FolderKanban } from 'lucide-react';
+import { X, FolderPlus, Trash2, Edit2, Check, Tag, Plus, FolderKanban, Copy, Download, Upload, DownloadCloud } from 'lucide-react';
 import { Project, TaskColorKey, DaySchedule } from '../types';
 import { COLOR_OPTIONS } from '../constants';
 
@@ -11,6 +11,10 @@ interface ProjectModalProps {
   onAddProject: (project: Omit<Project, 'id'>) => void;
   onUpdateProject: (projectId: string, updates: Partial<Project>) => void;
   onDeleteProject: (projectId: string) => void;
+  onDuplicateProject: (projectId: string) => void;
+  onExportProject: (projectId: string) => void;
+  onExportAllProjects: () => void;
+  onOpenImportModal: () => void;
 }
 
 export const ProjectModal: React.FC<ProjectModalProps> = ({
@@ -21,6 +25,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onAddProject,
   onUpdateProject,
   onDeleteProject,
+  onDuplicateProject,
+  onExportProject,
+  onExportAllProjects,
+  onOpenImportModal,
 }) => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
@@ -188,11 +196,38 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
 
           {/* Existing Projects List */}
           <div className="space-y-2.5">
-            <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
-              <span>現有專案列表 ({projects.length})</span>
-              <span className="text-slate-500 font-normal text-[11px]">
-                每個專案將在甘特圖中作為獨立列顯示
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span className="text-xs font-bold text-slate-300">
+                  現有專案列表 ({projects.length})
+                </span>
+                <span className="hidden sm:inline text-slate-500 font-normal text-[11px] ml-2">
+                  每個專案於甘特圖以獨立列顯示
+                </span>
+              </div>
+
+              {/* Quick Import / Export Backup Actions */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={onOpenImportModal}
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition active:scale-95"
+                  title="匯入專案 JSON 檔案 (支援單一專案或全備份)"
+                >
+                  <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>匯入專案</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={onExportAllProjects}
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition active:scale-95"
+                  title="匯出所有專案及排程項目的完整 JSON 備份檔"
+                >
+                  <DownloadCloud className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>備份全部</span>
+                </button>
+              </div>
             </div>
 
             <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-900/50">
@@ -281,14 +316,34 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-1">
+                      {/* One-click duplicate project with its items */}
+                      <button
+                        onClick={() => onDuplicateProject(proj.id)}
+                        className="p-1.5 rounded hover:bg-indigo-950/60 text-slate-400 hover:text-indigo-300 transition"
+                        title="一鍵複製此專案與所有排程項目"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Export single project */}
+                      <button
+                        onClick={() => onExportProject(proj.id)}
+                        className="p-1.5 rounded hover:bg-emerald-950/60 text-slate-400 hover:text-emerald-300 transition"
+                        title="匯出此專案為 JSON 檔案"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Edit project */}
                       <button
                         onClick={() => handleStartEdit(proj)}
                         className="p-1.5 rounded hover:bg-slate-800 text-slate-400 hover:text-white transition"
-                        title="編輯專案"
+                        title="編輯專案名稱與顏色"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
 
+                      {/* Delete project */}
                       {projects.length > 1 && (
                         <button
                           onClick={() => {

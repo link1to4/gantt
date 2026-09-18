@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { DaySchedule, Project, Task, ViewGroupingMode, ZoomLevel } from './types';
-import { DEFAULT_DAYS, DEFAULT_PROJECTS, ZOOM_CONFIG, START_HOUR, TOTAL_HOURS } from './constants';
+import { DaySchedule, Project, Task, ViewGroupingMode, ZoomLevel, TaskColorKey } from './types';
+import { DEFAULT_DAYS, DEFAULT_PROJECTS, ZOOM_CONFIG, START_HOUR, TOTAL_HOURS, COLOR_OPTIONS } from './constants';
 import { getDayWidth } from './utils/time';
 import { Header } from './components/Header';
 import { TimelineHeader } from './components/TimelineHeader';
@@ -11,7 +11,9 @@ import { ProjectViewRow } from './components/ProjectViewRow';
 import { TaskModal } from './components/TaskModal';
 import { ProjectModal } from './components/ProjectModal';
 import { HelpModal } from './components/HelpModal';
-import { Plus, FolderPlus, Layers, CalendarRange, Coffee, Moon } from 'lucide-react';
+import { ProjectImportModal } from './components/ProjectImportModal';
+import { exportSingleProject, exportAllProjects, ParsedImportResult } from './utils/projectTransfer';
+import { Plus, FolderPlus, Layers, CalendarRange, Coffee, Moon, CheckCircle2, AlertTriangle, Download, X } from 'lucide-react';
 
 const DAYS_STORAGE_KEY = 'gantt_chart_scheduler_days_v3';
 const PROJECTS_STORAGE_KEY = 'gantt_chart_scheduler_projects_v3';
@@ -62,6 +64,20 @@ export default function App() {
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
   const [helpModalOpen, setHelpModalOpen] = useState<boolean>(false);
   const [projectModalOpen, setProjectModalOpen] = useState<boolean>(false);
+  const [importModalOpen, setImportModalOpen] = useState<boolean>(false);
+  const [toast, setToast] = useState<{
+    id: string;
+    message: string;
+    type: 'success' | 'info' | 'error';
+  } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'info' | 'error' = 'success') => {
+    const id = String(Date.now());
+    setToast({ id, message, type });
+    setTimeout(() => {
+      setToast((prev) => (prev?.id === id ? null : prev));
+    }, 4500);
+  };
 
   // Collapsible Lunch (12:00~13:00) and Overtime (17:30~22:00)
   const [collapseLunch, setCollapseLunch] = useState<boolean>(() => {
@@ -256,6 +272,195 @@ export default function App() {
     }
   };
 
+  // One-click duplicate project with its items
+  const handleDuplicateProject = (projectId: string) => {
+    const sourceProject = projects.find((p) => p.id === projectId);
+    if (!sourceProject) return;
+
+    const colorKeys = Object.keys(COLOR_OPTIONS) as TaskColorKey[];
+    const curIdx = colorKeys.indexOf(sourceProject.color);
+    const nextColor = colorKeys[(curIdx + 1) % colorKeys.length];
+
+    const newProjectId = `proj-${Date.now()}`;
+    const newProjectName = `${sourceProject.name} (複製)`;
+
+    const duplicatedProject: Project = {
+      ...sourceProject,
+      id: newProjectId,
+      name: newProjectName,
+      color: nextColor,
+      description: sourceProject.description
+        ? `${sourceProject.description} (複製專案)`
+        : '複製建立之專案',
+    };
+
+    let clonedCount = 0;
+    const newDays = days.map((day) => {
+      const projectTasks = day.tasks.filter((t) => t.projectId === projectId);
+      if (projectTasks.length === 0) return day;
+
+      const clonedTasks: Task[] = projectTasks.map((t, idx) => ({
+        ...t,
+        id: `task-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 6)}`,
+        projectId: newProjectId,
+        color: nextColor,
+      }));
+
+      clonedCount += clonedTasks.length;
+      return {
+        ...day,
+        tasks: [...day.tasks, ...clonedTasks],
+      };
+    });
+
+    setProjects((prev) => [...prev, duplicatedProject]);
+    setDays(newDays);
+
+    showToast(`已一鍵複製專案「${newProjectName}」，內含 ${clonedCount} 個工作項目！`, 'success');
+  };
+
+  // Export single project
+  const handleExportProject = (projectId: string) => {
+    const proj = projects.find((p) => p.id === projectId);
+    if (!proj) return;
+    exportSingleProject(proj, days);
+    showToast(`已匯出專案「${proj.name}」JSON 檔案`, 'info');
+  };
+
+  // Export all projects backup
+  const handleExportAllProjects = () => {
+    exportAllProjects(projects, days);
+    showToast(`已匯出全專案排程備份 JSON 檔案`, 'info');
+  };
+
+  // Import single project
+  const handleImportSingleProject = (data: Extract<ParsedImportResult, { type: 'single-project' }>) => {
+    const newProjectId = `proj-${Date.now()}`;
+    const hasDuplicateName = projects.some((p) => p.name === data.project.name);
+    const importedProject: Project = {
+      ...data.project,
+      id: newProjectId,
+      name: hasDuplicateName ? `${data.project.name} (匯入)` : data.project.name,
+    };
+
+    let importedTaskCount = 0;
+    const updatedDays = [...days];
+
+    data.daysWithTasks.forEach((importedDay, dIdx) => {
+      let targetDayIndex = -1;
+      if (importedDay.dateString) {
+        targetDayIndex = updatedDays.findIndex((d) => d.dateString === importedDay.dateString);
+      }
+      if (targetDayIndex === -1 && importedDay.dayLabel) {
+        targetDayIndex = updatedDays.findIndex((d) => d.label === importedDay.dayLabel);
+      }
+      if (targetDayIndex === -1 && dIdx < updatedDays.length) {
+        targetDayIndex = dIdx;
+      }
+
+      if (targetDayIndex === -1) {
+        const newDayId = `day-${Date.now()}-${dIdx}`;
+        updatedDays.push({
+          id: newDayId,
+          label: importedDay.dayLabel || `Day ${updatedDays.length + 1}`,
+          dateString: importedDay.dateString,
+          tasks: [],
+        });
+        targetDayIndex = updatedDays.length - 1;
+      }
+
+      const newTasks: Task[] = importedDay.tasks.map((t, tIdx) => ({
+        ...t,
+        id: `task-${Date.now()}-${dIdx}-${tIdx}-${Math.random().toString(36).substr(2, 6)}`,
+        projectId: newProjectId,
+      }));
+
+      importedTaskCount += newTasks.length;
+
+      updatedDays[targetDayIndex] = {
+        ...updatedDays[targetDayIndex],
+        tasks: [...updatedDays[targetDayIndex].tasks, ...newTasks],
+      };
+    });
+
+    setProjects((prev) => [...prev, importedProject]);
+    setDays(updatedDays);
+
+    showToast(`成功匯入專案「${importedProject.name}」，共 ${importedTaskCount} 個排程項目！`, 'success');
+  };
+
+  // Import all projects backup
+  const handleImportAllProjects = (
+    data: Extract<ParsedImportResult, { type: 'all-projects' }>,
+    overwrite: boolean
+  ) => {
+    if (overwrite) {
+      setProjects(data.projects);
+      setDays(data.days);
+      showToast(`已完整還原備份，共 ${data.projects.length} 個專案與 ${data.totalTasksCount} 個項目！`, 'success');
+    } else {
+      const projectIdMap: Record<string, string> = {};
+      const newProjectsToAdd: Project[] = [];
+
+      data.projects.forEach((importedProj) => {
+        const newId = `proj-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        projectIdMap[importedProj.id] = newId;
+
+        const hasDuplicateName = projects.some((p) => p.name === importedProj.name);
+        newProjectsToAdd.push({
+          ...importedProj,
+          id: newId,
+          name: hasDuplicateName ? `${importedProj.name} (匯入)` : importedProj.name,
+        });
+      });
+
+      let importedTaskCount = 0;
+      const updatedDays = [...days];
+
+      data.days.forEach((importedDay, dIdx) => {
+        let targetDayIndex = -1;
+        if (importedDay.dateString) {
+          targetDayIndex = updatedDays.findIndex((d) => d.dateString === importedDay.dateString);
+        }
+        if (targetDayIndex === -1 && importedDay.label) {
+          targetDayIndex = updatedDays.findIndex((d) => d.label === importedDay.label);
+        }
+        if (targetDayIndex === -1 && dIdx < updatedDays.length) {
+          targetDayIndex = dIdx;
+        }
+
+        if (targetDayIndex === -1) {
+          const newDayId = `day-${Date.now()}-${dIdx}`;
+          updatedDays.push({
+            id: newDayId,
+            label: importedDay.label || `Day ${updatedDays.length + 1}`,
+            dateString: importedDay.dateString,
+            tasks: [],
+          });
+          targetDayIndex = updatedDays.length - 1;
+        }
+
+        const remappedTasks: Task[] = importedDay.tasks.map((t, tIdx) => ({
+          ...t,
+          id: `task-${Date.now()}-${dIdx}-${tIdx}-${Math.random().toString(36).substr(2, 6)}`,
+          projectId: projectIdMap[t.projectId] || newProjectsToAdd[0]?.id || projects[0]?.id,
+        }));
+
+        importedTaskCount += remappedTasks.length;
+
+        updatedDays[targetDayIndex] = {
+          ...updatedDays[targetDayIndex],
+          tasks: [...updatedDays[targetDayIndex].tasks, ...remappedTasks],
+        };
+      });
+
+      setProjects((prev) => [...prev, ...newProjectsToAdd]);
+      setDays(updatedDays);
+
+      showToast(`合併匯入完成！新增 ${newProjectsToAdd.length} 個專案與 ${importedTaskCount} 個工作項目！`, 'success');
+    }
+  };
+
   // Task handlers
   const handleAddTask = (
     dayId?: string,
@@ -374,6 +579,8 @@ export default function App() {
           handleAddTask(dayId, 9, projId)
         }
         onOpenProjectModal={() => setProjectModalOpen(true)}
+        onOpenImportModal={() => setImportModalOpen(true)}
+        onExportAllProjects={handleExportAllProjects}
         onResetData={handleResetData}
         onToggleHelp={() => setHelpModalOpen(true)}
       />
@@ -426,6 +633,8 @@ export default function App() {
                         onDeleteTask={handleDeleteTask}
                         onOpenEditModal={handleOpenEditModal}
                         onMoveTaskAcrossDays={handleMoveTaskAcrossDays}
+                        onDuplicateProject={handleDuplicateProject}
+                        onExportProject={handleExportProject}
                       />
                     ))}
                   </div>
@@ -485,6 +694,8 @@ export default function App() {
                           onUpdateTask={handleUpdateTask}
                           onDeleteTask={handleDeleteTask}
                           onOpenEditModal={handleOpenEditModal}
+                          onDuplicateProject={handleDuplicateProject}
+                          onExportProject={handleExportProject}
                         />
                       ))}
                     </div>
@@ -580,6 +791,23 @@ export default function App() {
         onAddProject={handleAddProject}
         onUpdateProject={handleUpdateProject}
         onDeleteProject={handleDeleteProject}
+        onDuplicateProject={handleDuplicateProject}
+        onExportProject={handleExportProject}
+        onOpenImportModal={() => {
+          setProjectModalOpen(false);
+          setImportModalOpen(true);
+        }}
+        onExportAllProjects={handleExportAllProjects}
+      />
+
+      {/* Project Import Modal */}
+      <ProjectImportModal
+        isOpen={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        existingProjects={projects}
+        existingDays={days}
+        onImportSingleProject={handleImportSingleProject}
+        onImportAllProjects={handleImportAllProjects}
       />
 
       {/* Help Modal */}
@@ -587,6 +815,32 @@ export default function App() {
         isOpen={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}
       />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-14 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div
+            className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs sm:text-sm font-medium ${
+              toast.type === 'success'
+                ? 'bg-emerald-950/95 text-emerald-200 border-emerald-500/50 shadow-emerald-950/60'
+                : toast.type === 'error'
+                ? 'bg-rose-950/95 text-rose-200 border-rose-500/50 shadow-rose-950/60'
+                : 'bg-indigo-950/95 text-indigo-200 border-indigo-500/50 shadow-indigo-950/60'
+            }`}
+          >
+            {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+            {toast.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />}
+            {toast.type === 'info' && <Download className="w-4 h-4 text-indigo-400 shrink-0" />}
+            <span>{toast.message}</span>
+            <button
+              onClick={() => setToast(null)}
+              className="ml-2 p-0.5 rounded text-slate-400 hover:text-white transition"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
