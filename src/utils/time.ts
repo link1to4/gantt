@@ -20,6 +20,31 @@ export function formatDuration(duration: number): string {
 }
 
 /**
+ * Formats a date string (e.g. "2026-09-18") with weekday (e.g. "9/18 (週五)")
+ */
+export function formatDateLabel(dateString?: string, fallbackLabel?: string): string {
+  if (!dateString) return fallbackLabel || '';
+  try {
+    const parts = dateString.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+      const weekday = weekdays[d.getDay()];
+      return `${month + 1}/${day} (${weekday})`;
+    }
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return dateString;
+    const weekdays = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+    return `${d.getMonth() + 1}/${d.getDate()} (${weekdays[d.getDay()]})`;
+  } catch {
+    return dateString;
+  }
+}
+
+/**
  * Breaks down the hours of a task into normal hours (8-18) and overtime hours (18-22)
  */
 export function calculateTaskHours(startHour: number, duration: number): {

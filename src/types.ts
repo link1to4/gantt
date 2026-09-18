@@ -56,4 +56,4 @@ export interface ActiveDragInfo {
 }
 
 export type ZoomLevel = 'compact' | 'normal' | 'spacious';
-export type ViewGroupingMode = 'by-day' | 'by-project';
+export type ViewGroupingMode = 'continuous' | 'by-day' | 'by-project';

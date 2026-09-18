@@ -3,15 +3,17 @@ import { DaySchedule, Project, Task, ViewGroupingMode, ZoomLevel } from './types
 import { DEFAULT_DAYS, DEFAULT_PROJECTS, ZOOM_CONFIG, START_HOUR, TOTAL_HOURS } from './constants';
 import { Header } from './components/Header';
 import { TimelineHeader } from './components/TimelineHeader';
+import { ContinuousTimelineHeader } from './components/ContinuousTimelineHeader';
+import { ContinuousProjectRow } from './components/ContinuousProjectRow';
 import { DayRow } from './components/DayRow';
 import { ProjectViewRow } from './components/ProjectViewRow';
 import { TaskModal } from './components/TaskModal';
 import { ProjectModal } from './components/ProjectModal';
 import { HelpModal } from './components/HelpModal';
-import { Plus, FolderPlus, Layers } from 'lucide-react';
+import { Plus, FolderPlus, Layers, CalendarRange } from 'lucide-react';
 
-const DAYS_STORAGE_KEY = 'gantt_chart_scheduler_days_v2';
-const PROJECTS_STORAGE_KEY = 'gantt_chart_scheduler_projects_v2';
+const DAYS_STORAGE_KEY = 'gantt_chart_scheduler_days_v3';
+const PROJECTS_STORAGE_KEY = 'gantt_chart_scheduler_projects_v3';
 
 export default function App() {
   // Projects state
@@ -37,7 +39,6 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Migration: Ensure all tasks have a valid projectId
           return parsed.map((day: DaySchedule) => ({
             ...day,
             tasks: day.tasks.map((task: Task) => ({
@@ -54,7 +55,7 @@ export default function App() {
   });
 
   const [zoom, setZoom] = useState<ZoomLevel>('normal');
-  const [viewMode, setViewMode] = useState<ViewGroupingMode>('by-day');
+  const [viewMode, setViewMode] = useState<ViewGroupingMode>('continuous');
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
   const [helpModalOpen, setHelpModalOpen] = useState<boolean>(false);
   const [projectModalOpen, setProjectModalOpen] = useState<boolean>(false);
@@ -100,9 +101,32 @@ export default function App() {
   // Day handlers
   const handleAddDay = () => {
     const nextNumber = days.length + 1;
+    let nextDateStr = '';
+    const lastDay = days[days.length - 1];
+    if (lastDay?.dateString) {
+      const parts = lastDay.dateString.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        d.setDate(d.getDate() + 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        nextDateStr = `${y}-${m}-${dayNum}`;
+      }
+    }
+    if (!nextDateStr) {
+      const d = new Date();
+      d.setDate(d.getDate() + nextNumber - 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const dayNum = String(d.getDate()).padStart(2, '0');
+      nextDateStr = `${y}-${m}-${dayNum}`;
+    }
+
     const newDay: DaySchedule = {
       id: `day-${Date.now()}`,
       label: `Day ${nextNumber}`,
+      dateString: nextDateStr,
       tasks: [],
     };
     setDays((prev) => [...prev, newDay]);
@@ -117,6 +141,52 @@ export default function App() {
   const handleDeleteDay = (dayId: string) => {
     if (days.length <= 1) return;
     setDays((prev) => prev.filter((d) => d.id !== dayId));
+  };
+
+  const handleMoveTaskAcrossDays = (
+    fromDayId: string,
+    toDayId: string,
+    taskId: string,
+    newStartHour: number,
+    newDuration?: number
+  ) => {
+    setDays((prev) => {
+      const fromDay = prev.find((d) => d.id === fromDayId);
+      const task = fromDay?.tasks.find((t) => t.id === taskId);
+      if (!task) return prev;
+
+      const updatedTask: Task = {
+        ...task,
+        startHour: newStartHour,
+        duration: newDuration !== undefined ? newDuration : task.duration,
+      };
+
+      if (fromDayId === toDayId) {
+        return prev.map((day) => {
+          if (day.id !== fromDayId) return day;
+          return {
+            ...day,
+            tasks: day.tasks.map((t) => (t.id === taskId ? updatedTask : t)),
+          };
+        });
+      }
+
+      return prev.map((day) => {
+        if (day.id === fromDayId) {
+          return {
+            ...day,
+            tasks: day.tasks.filter((t) => t.id !== taskId),
+          };
+        }
+        if (day.id === toDayId) {
+          return {
+            ...day,
+            tasks: [...day.tasks, updatedTask],
+          };
+        }
+        return day;
+      });
+    });
   };
 
   // Project handlers
@@ -275,57 +345,95 @@ export default function App() {
           <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[420px]">
             <div
               style={{
-                minWidth: `${sidebarWidth + TOTAL_HOURS * hourWidth}px`,
+                minWidth: `${
+                  viewMode === 'continuous'
+                    ? sidebarWidth + days.length * TOTAL_HOURS * hourWidth + 140
+                    : sidebarWidth + TOTAL_HOURS * hourWidth
+                }px`,
               }}
               className="relative flex flex-col"
             >
-              {/* Timeline Header (Hourly Ruler) */}
-              <TimelineHeader
-                hourWidth={hourWidth}
-                sidebarWidth={sidebarWidth}
-              />
+              {viewMode === 'continuous' ? (
+                /* Continuous Multi-Day Mode: X-axis stretches Day 1 -> Day 2 -> Day 3... */
+                <div className="relative flex flex-col">
+                  <ContinuousTimelineHeader
+                    days={days}
+                    hourWidth={hourWidth}
+                    sidebarWidth={sidebarWidth}
+                    onAddDay={handleAddDay}
+                    onUpdateDay={handleUpdateDay}
+                    onDeleteDay={handleDeleteDay}
+                  />
 
-              {/* Rows presentation: Separated by Project */}
-              {viewMode === 'by-day' ? (
-                /* Group by Day: Under each Day, separate rows for each Project */
-                <div className="divide-y divide-slate-800">
-                  {days.map((day, idx) => (
-                    <DayRow
-                      key={day.id}
-                      day={day}
-                      dayIndex={idx}
-                      totalDays={days.length}
-                      projects={visibleProjects}
-                      hourWidth={hourWidth}
-                      sidebarWidth={sidebarWidth}
-                      onUpdateDay={handleUpdateDay}
-                      onDeleteDay={handleDeleteDay}
-                      onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
-                      onUpdateTask={handleUpdateTask}
-                      onDeleteTask={handleDeleteTask}
-                      onOpenEditModal={handleOpenEditModal}
-                      onOpenProjectModal={() => setProjectModalOpen(true)}
-                    />
-                  ))}
+                  {/* Project Rows across all days */}
+                  <div className="divide-y divide-slate-800">
+                    {visibleProjects.map((project) => (
+                      <ContinuousProjectRow
+                        key={project.id}
+                        project={project}
+                        days={days}
+                        hourWidth={hourWidth}
+                        sidebarWidth={sidebarWidth}
+                        onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
+                        onUpdateTask={handleUpdateTask}
+                        onDeleteTask={handleDeleteTask}
+                        onOpenEditModal={handleOpenEditModal}
+                        onMoveTaskAcrossDays={handleMoveTaskAcrossDays}
+                      />
+                    ))}
+                  </div>
                 </div>
               ) : (
-                /* Group by Project: Under each Project, separate rows for each Day */
-                <div className="divide-y divide-slate-800">
-                  {visibleProjects.map((project) => (
-                    <ProjectViewRow
-                      key={project.id}
-                      project={project}
-                      days={days}
-                      hourWidth={hourWidth}
-                      sidebarWidth={sidebarWidth}
-                      onUpdateProject={handleUpdateProject}
-                      onDeleteProject={handleDeleteProject}
-                      onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
-                      onUpdateTask={handleUpdateTask}
-                      onDeleteTask={handleDeleteTask}
-                      onOpenEditModal={handleOpenEditModal}
-                    />
-                  ))}
+                /* Grouped Views: by-day or by-project */
+                <div className="relative flex flex-col">
+                  {/* Timeline Header (Single Day Ruler) */}
+                  <TimelineHeader
+                    hourWidth={hourWidth}
+                    sidebarWidth={sidebarWidth}
+                  />
+
+                  {viewMode === 'by-day' ? (
+                    /* Group by Day: Under each Day, separate rows for each Project */
+                    <div className="divide-y divide-slate-800">
+                      {days.map((day, idx) => (
+                        <DayRow
+                          key={day.id}
+                          day={day}
+                          dayIndex={idx}
+                          totalDays={days.length}
+                          projects={visibleProjects}
+                          hourWidth={hourWidth}
+                          sidebarWidth={sidebarWidth}
+                          onUpdateDay={handleUpdateDay}
+                          onDeleteDay={handleDeleteDay}
+                          onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
+                          onUpdateTask={handleUpdateTask}
+                          onDeleteTask={handleDeleteTask}
+                          onOpenEditModal={handleOpenEditModal}
+                          onOpenProjectModal={() => setProjectModalOpen(true)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    /* Group by Project: Under each Project, separate rows for each Day */
+                    <div className="divide-y divide-slate-800">
+                      {visibleProjects.map((project) => (
+                        <ProjectViewRow
+                          key={project.id}
+                          project={project}
+                          days={days}
+                          hourWidth={hourWidth}
+                          sidebarWidth={sidebarWidth}
+                          onUpdateProject={handleUpdateProject}
+                          onDeleteProject={handleDeleteProject}
+                          onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
+                          onUpdateTask={handleUpdateTask}
+                          onDeleteTask={handleDeleteTask}
+                          onOpenEditModal={handleOpenEditModal}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -344,7 +452,7 @@ export default function App() {
               </span>
               <span className="hidden md:inline text-slate-500">|</span>
               <span className="hidden md:inline text-slate-400">
-                💡 拖拉支援以 <strong>30 分鐘 (半小時)</strong> 為單位微調，點擊任意時間格亦可直接新增對應專案項目。
+                💡 連續 X 軸模式下，時間軸沿 X 軸跨日延伸 (Day 1 ➔ Day 2 ➔ Day 3...)，方塊支援 30 分鐘微調與跨日橫向拖拉！
               </span>
             </div>
 

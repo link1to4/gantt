@@ -51,9 +51,9 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
           <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700">
             <PlusCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
             <div>
-              <div className="font-semibold text-white">專案維度與分列呈現</div>
+              <div className="font-semibold text-white">X 軸連續多日延伸 (Day 1 ➔ Day 2 ➔ Day 3...)</div>
               <div className="text-xs text-slate-400 mt-0.5">
-                每個專案皆以獨立列清楚分開呈現，點擊頂部「管理專案」可新增或自訂專案色彩；點擊特定專案列的時間空格即可直接將項目指派至該專案。
+                點擊頂部或時間軸右側的<strong>「增加日期」</strong>，時間軸會沿 X 軸依序向右延伸多日排程。在連續檢視下，您甚至可以直接將方塊<strong>橫向跨日拖曳</strong>至其他天的對應時段。
               </div>
             </div>
           </div>

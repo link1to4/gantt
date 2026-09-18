@@ -1,6 +1,7 @@
 import React from 'react';
 import { 
   CalendarDays, 
+  CalendarRange,
   Plus, 
   RotateCcw, 
   HelpCircle,
@@ -89,16 +90,28 @@ export const Header: React.FC<HeaderProps> = ({
             {/* View Mode Toggle */}
             <div className="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs font-medium">
               <button
+                onClick={() => onViewModeChange('continuous')}
+                className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 ${
+                  viewMode === 'continuous'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="X 軸連續延伸模式：Day 1 ➔ Day 2 ➔ Day 3 依序向右延伸，專案獨立分列"
+              >
+                <CalendarRange className="w-3.5 h-3.5" />
+                <span>連續 X 軸 (推薦)</span>
+              </button>
+              <button
                 onClick={() => onViewModeChange('by-day')}
                 className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 ${
                   viewMode === 'by-day'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="依日期分組，每天下方顯示各專案列"
+                title="依日期垂直分組，每天下方顯示各專案列"
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>依日期</span>
+                <span>依日期分組</span>
               </button>
               <button
                 onClick={() => onViewModeChange('by-project')}
@@ -107,10 +120,10 @@ export const Header: React.FC<HeaderProps> = ({
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
-                title="依專案分組，每個專案下方顯示各日程列"
+                title="依專案垂直分組，每個專案下方顯示各日程列"
               >
                 <FolderKanban className="w-3.5 h-3.5" />
-                <span>依專案</span>
+                <span>依專案分組</span>
               </button>
             </div>
 

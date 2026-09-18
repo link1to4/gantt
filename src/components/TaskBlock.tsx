@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { GripVertical, Pencil, X, Moon, Clock } from 'lucide-react';
-import { Task, DragMode } from '../types';
-import { START_HOUR, END_HOUR, OVERTIME_HOUR, COLOR_OPTIONS } from '../constants';
+import { Task, DragMode, DaySchedule } from '../types';
+import { START_HOUR, END_HOUR, OVERTIME_HOUR, TOTAL_HOURS, COLOR_OPTIONS } from '../constants';
 import { formatTimeRange, calculateTaskHours, clampTaskBounds } from '../utils/time';
 
 interface TaskBlockProps {
@@ -9,9 +9,18 @@ interface TaskBlockProps {
   dayId: string;
   hourWidth: number;
   rowHeight: number;
+  continuousDays?: DaySchedule[];
+  dayIndex?: number;
   onUpdateTask: (dayId: string, taskId: string, updates: Partial<Task>) => void;
   onDeleteTask: (dayId: string, taskId: string) => void;
   onOpenEditModal: (dayId: string, task: Task) => void;
+  onMoveTaskAcrossDays?: (
+    fromDayId: string,
+    toDayId: string,
+    taskId: string,
+    newStartHour: number,
+    newDuration?: number
+  ) => void;
 }
 
 export const TaskBlock: React.FC<TaskBlockProps> = ({
@@ -19,9 +28,12 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
   dayId,
   hourWidth,
   rowHeight,
+  continuousDays,
+  dayIndex,
   onUpdateTask,
   onDeleteTask,
   onOpenEditModal,
+  onMoveTaskAcrossDays,
 }) => {
   const [dragState, setDragState] = useState<{
     mode: DragMode;
@@ -30,9 +42,16 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
     initialDuration: number;
     previewStart: number;
     previewDuration: number;
+    targetDayId?: string;
+    targetDayIndex?: number;
+    targetDayLabel?: string;
   } | null>(null);
 
   const blockRef = useRef<HTMLDivElement>(null);
+
+  const isContinuous = typeof dayIndex === 'number' && continuousDays && continuousDays.length > 0;
+  const dayWidth = TOTAL_HOURS * hourWidth;
+  const currentDayIndex = isContinuous ? dayIndex : 0;
 
   // Active or preview values
   const currentStart = dragState ? dragState.previewStart : task.startHour;
@@ -40,7 +59,9 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
 
   // Geometry: 0.5h minimum width = (hourWidth * 0.5) - 6
   const minBlockWidth = Math.max(26, Math.round(hourWidth * 0.5) - 6);
-  const leftPx = (currentStart - START_HOUR) * hourWidth + 3;
+  const activeDayIndex = dragState?.targetDayIndex ?? currentDayIndex;
+  const dayBaseLeft = isContinuous ? activeDayIndex * dayWidth : 0;
+  const leftPx = dayBaseLeft + (currentStart - START_HOUR) * hourWidth + 3;
   const widthPx = Math.max(minBlockWidth, currentDuration * hourWidth - 6);
   const trackIndex = task.trackIndex || 0;
   const topPx = trackIndex * (rowHeight + 8) + 8;
@@ -67,6 +88,9 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
       initialDuration: task.duration,
       previewStart: task.startHour,
       previewDuration: task.duration,
+      targetDayId: dayId,
+      targetDayIndex: currentDayIndex,
+      targetDayLabel: isContinuous ? continuousDays[currentDayIndex]?.label : undefined,
     };
 
     setDragState(initial);
@@ -78,26 +102,54 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
           : moveEvent.clientX;
 
       const deltaX = currentX - initial.startClientX;
-      // Snapping to half-hour (30 minutes)
       const halfHourWidth = hourWidth / 2;
-      const deltaHalfHours = Math.round(deltaX / halfHourWidth);
-      const deltaHours = deltaHalfHours * 0.5;
 
       if (mode === 'move') {
-        const rawNewStart = initial.initialStart + deltaHours;
-        const maxStart = END_HOUR - initial.initialDuration;
-        const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawNewStart));
+        if (isContinuous && continuousDays && onMoveTaskAcrossDays) {
+          // Cross-day continuous horizontal movement
+          const initialAbsX = currentDayIndex * dayWidth + (initial.initialStart - START_HOUR) * hourWidth;
+          const newAbsX = initialAbsX + deltaX;
+          const targetDayIdx = Math.floor(newAbsX / dayWidth);
+          const clampedDayIdx = Math.max(0, Math.min(continuousDays.length - 1, targetDayIdx));
+          const inDayX = newAbsX - clampedDayIdx * dayWidth;
+          const deltaHalfHours = Math.round(inDayX / halfHourWidth);
+          const rawStart = START_HOUR + deltaHalfHours * 0.5;
+          const maxStart = END_HOUR - initial.initialDuration;
+          const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawStart));
 
-        setDragState((prev) =>
-          prev
-            ? {
-                ...prev,
-                previewStart: boundedStart,
-                previewDuration: initial.initialDuration,
-              }
-            : null
-        );
+          setDragState((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  previewStart: boundedStart,
+                  previewDuration: initial.initialDuration,
+                  targetDayId: continuousDays[clampedDayIdx].id,
+                  targetDayIndex: clampedDayIdx,
+                  targetDayLabel: continuousDays[clampedDayIdx].label,
+                }
+              : null
+          );
+        } else {
+          // Within-day movement
+          const deltaHalfHours = Math.round(deltaX / halfHourWidth);
+          const deltaHours = deltaHalfHours * 0.5;
+          const rawNewStart = initial.initialStart + deltaHours;
+          const maxStart = END_HOUR - initial.initialDuration;
+          const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawNewStart));
+
+          setDragState((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  previewStart: boundedStart,
+                  previewDuration: initial.initialDuration,
+                }
+              : null
+          );
+        }
       } else if (mode === 'resize-end') {
+        const deltaHalfHours = Math.round(deltaX / halfHourWidth);
+        const deltaHours = deltaHalfHours * 0.5;
         const rawNewDuration = initial.initialDuration + deltaHours;
         const maxDuration = END_HOUR - initial.initialStart;
         // Minimum duration is 0.5 hour (30 mins)
@@ -113,6 +165,8 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
             : null
         );
       } else if (mode === 'resize-start') {
+        const deltaHalfHours = Math.round(deltaX / halfHourWidth);
+        const deltaHours = deltaHalfHours * 0.5;
         const originalEnd = initial.initialStart + initial.initialDuration;
         const rawNewStart = initial.initialStart + deltaHours;
         // Start cannot exceed originalEnd - 0.5
@@ -140,7 +194,17 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
       setDragState((current) => {
         if (current) {
           const bounded = clampTaskBounds(current.previewStart, current.previewDuration);
-          if (
+          const targetDayId = current.targetDayId || dayId;
+
+          if (isContinuous && onMoveTaskAcrossDays && targetDayId !== dayId) {
+            onMoveTaskAcrossDays(
+              dayId,
+              targetDayId,
+              task.id,
+              bounded.startHour,
+              bounded.duration
+            );
+          } else if (
             bounded.startHour !== task.startHour ||
             bounded.duration !== task.duration
           ) {
@@ -298,6 +362,11 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
       {/* Floating Active Drag Tooltip */}
       {dragState && (
         <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2.5 py-1 rounded-md shadow-xl border border-slate-700 pointer-events-none flex items-center gap-2 whitespace-nowrap z-50">
+          {dragState.targetDayLabel && (
+            <span className="font-bold text-amber-300 bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-700/60">
+              {dragState.targetDayLabel}
+            </span>
+          )}
           <span className="font-mono font-bold text-sky-400">
             {formatTimeRange(currentStart, currentDuration)}
           </span>
