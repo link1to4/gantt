@@ -49,6 +49,7 @@ export default function App() {
             tasks: day.tasks.map((task: Task) => ({
               ...task,
               projectId: task.projectId || DEFAULT_PROJECTS[0].id,
+              startHour: Math.max(START_HOUR, task.startHour),
             })),
           }));
         }
@@ -481,7 +482,7 @@ export default function App() {
             id: '',
             projectId: targetProj,
             name: '',
-            startHour: defaultStartHour,
+            startHour: Math.max(START_HOUR, Math.round(defaultStartHour * 2) / 2),
             duration: 2,
             color: 'blue',
           } as Task)

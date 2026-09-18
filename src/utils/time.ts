@@ -57,7 +57,7 @@ export function formatDateLabel(dateString?: string, fallbackLabel?: string): st
  * Breaks down the hours of a task:
  * - 正常工時: 08:30 ~ 12:00 (3.5h) 與 13:00 ~ 17:30 (4.5h)，全日共 8.0 小時
  * - 中午休息: 12:00 ~ 13:00 (1.0h) 為休息時間，不計入工時
- * - 加班時段: 17:30 ~ 22:00 (及 08:00 ~ 08:30 提早時段)
+ * - 加班時段: 17:30 ~ 22:00 (4.5h)
  */
 export function calculateTaskHours(startHour: number, duration: number): {
   normalHours: number;

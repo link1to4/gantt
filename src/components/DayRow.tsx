@@ -8,7 +8,8 @@ import {
   TOTAL_HOURS, 
   COLOR_OPTIONS,
   COLLAPSED_LUNCH_WIDTH,
-  COLLAPSED_OVERTIME_WIDTH
+  COLLAPSED_OVERTIME_WIDTH,
+  MORNING_SLOTS
 } from '../constants';
 import { assignTracksToTasks, calculateTaskHours, getDayWidth, dayXToHour } from '../utils/time';
 import { TaskBlock } from './TaskBlock';
@@ -291,16 +292,15 @@ export const DayRow: React.FC<DayRowProps> = ({
                 >
                   {/* Hourly vertical background gridlines */}
                   <div className="absolute inset-0 flex pointer-events-none">
-                    {/* Morning Hours 8, 9, 10, 11 */}
-                    {[8, 9, 10, 11].map((hour) => (
+                    {/* Morning Hours: 08:30 (0.5h), 09:00 (1h), 10:00 (1h), 11:00 (1h) */}
+                    {MORNING_SLOTS.map((slot) => (
                       <div
-                        key={hour}
-                        style={{ width: hourWidth }}
+                        key={slot.hour}
+                        style={{ width: slot.span * hourWidth }}
                         className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
                       >
-                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
-                        {hour === 8 && (
-                          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-sky-400/50 z-10 pointer-events-none" />
+                        {slot.hasMidTick && (
+                          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
                         )}
                       </div>
                     ))}

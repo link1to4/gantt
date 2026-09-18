@@ -1,13 +1,28 @@
 import { DaySchedule, Project, TaskColorKey, TaskColorMeta, ZoomLevel } from './types';
 
-export const START_HOUR = 8;
+export const START_HOUR = 8.5;       // 08:30 甘特圖當日開始 (取消早晨準備時段，直接從 08:30 開始)
 export const WORK_START_HOUR = 8.5;  // 08:30 正常上班開始
 export const LUNCH_START_HOUR = 12;   // 12:00 中午休息開始 (不計工時)
 export const LUNCH_END_HOUR = 13;     // 13:00 中午休息結束
 export const WORK_END_HOUR = 17.5;    // 17:30 正常上班結束
 export const OVERTIME_HOUR = 17.5;    // 17:30 起為加班時段 (別名)
 export const END_HOUR = 22;           // 22:00 甘特圖當日結束
-export const TOTAL_HOURS = END_HOUR - START_HOUR; // 14 hours (08:00 - 22:00)
+export const TOTAL_HOURS = END_HOUR - START_HOUR; // 13.5 hours (08:30 - 22:00)
+
+export interface MorningSlot {
+  hour: number;
+  label: string;
+  span: number; // in hours (0.5h or 1.0h)
+  sub: string;
+  hasMidTick?: boolean;
+}
+
+export const MORNING_SLOTS: MorningSlot[] = [
+  { hour: 8.5, label: '08:30', span: 0.5, sub: '上班起', hasMidTick: false },
+  { hour: 9, label: '09:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 10, label: '10:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 11, label: '11:00', span: 1.0, sub: '+1h', hasMidTick: true },
+];
 
 // Collapsed widths for lunch break and overtime periods
 export const COLLAPSED_LUNCH_WIDTH = 28; // 28px compact folded accordion strip for 12:00 - 13:00

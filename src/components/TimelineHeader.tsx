@@ -9,7 +9,8 @@ import {
   OVERTIME_HOUR, 
   END_HOUR, 
   COLLAPSED_LUNCH_WIDTH,
-  COLLAPSED_OVERTIME_WIDTH
+  COLLAPSED_OVERTIME_WIDTH,
+  MORNING_SLOTS
 } from '../constants';
 import { formatHour } from '../utils/time';
 
@@ -30,8 +31,7 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
   collapseOvertime = false,
   onToggleCollapseOvertime,
 }) => {
-  const earlyPrepSpan = WORK_START_HOUR - START_HOUR; // 0.5h (08:00 - 08:30)
-  const morningSpan = LUNCH_START_HOUR - WORK_START_HOUR; // 3.5h (08:30 - 12:00)
+  const morningSpan = LUNCH_START_HOUR - START_HOUR; // 3.5h (08:30 - 12:00)
   const lunchSpan = LUNCH_END_HOUR - LUNCH_START_HOUR; // 1.0h (12:00 - 13:00)
   const afternoonSpan = WORK_END_HOUR - LUNCH_END_HOUR; // 4.5h (13:00 - 17:30)
   const overtimeSpan = END_HOUR - WORK_END_HOUR; // 4.5h (17:30 - 22:00)
@@ -47,15 +47,6 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
         >
           <span className="font-semibold text-slate-300">時段分配</span>
           <span className="text-[10px] text-slate-400 font-mono">步進: 30分 (0.5h)</span>
-        </div>
-
-        {/* Early prep strip (08:00 - 08:30) */}
-        <div
-          style={{ width: earlyPrepSpan * hourWidth }}
-          className="flex-shrink-0 bg-slate-900/90 text-slate-400 border-r border-slate-700/60 px-1 py-1 flex items-center justify-center text-[10px]"
-          title="早晨準備時段 (08:00 - 08:30)"
-        >
-          <span>準備</span>
         </div>
 
         {/* Morning normal hours indicator strip (08:30 - 12:00) */}
@@ -168,29 +159,29 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
 
         {/* Hourly cells */}
         <div className="flex relative">
-          {/* Morning Hours 8, 9, 10, 11 */}
-          {[8, 9, 10, 11].map((hour) => (
+          {/* Morning Hours: 08:30 (0.5h), 09:00 (1h), 10:00 (1h), 11:00 (1h) */}
+          {MORNING_SLOTS.map((slot) => (
             <div
-              key={hour}
-              style={{ width: hourWidth }}
+              key={slot.hour}
+              style={{ width: slot.span * hourWidth }}
               className="flex-shrink-0 text-center py-2 border-r border-slate-800/80 flex flex-col justify-center items-center relative transition-colors bg-slate-900 text-slate-300 font-medium"
             >
               <div className="flex items-baseline gap-0.5">
-                <span className="text-xs font-mono">{formatHour(hour)}</span>
+                <span className="text-xs font-mono">{slot.label}</span>
               </div>
               <div
                 className={`text-[10px] font-mono scale-90 ${
-                  hour === 8 ? 'text-sky-400 font-bold' : 'text-slate-500'
+                  slot.hour === 8.5 ? 'text-sky-400 font-bold' : 'text-slate-500'
                 }`}
               >
-                {hour === 8 ? '08:30上班' : '+1h'}
+                {slot.sub}
               </div>
-              <div
-                className={`absolute left-1/2 bottom-0 pointer-events-none ${
-                  hour === 8 ? 'bg-sky-400 h-3.5 w-[1.5px]' : 'bg-slate-700/80 w-[1px] h-2'
-                }`}
-                title={hour === 8 ? '08:30 上班起' : '30分鐘'}
-              />
+              {slot.hasMidTick && (
+                <div
+                  className="absolute left-1/2 bottom-0 pointer-events-none bg-slate-700/80 w-[1px] h-2"
+                  title="30分鐘"
+                />
+              )}
             </div>
           ))}
 
