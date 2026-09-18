@@ -222,7 +222,11 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
                 <div
                   key={slot.hour}
                   style={{ width: slot.span * hourWidth }}
-                  className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
+                  className={`flex-shrink-0 h-full border-r ${
+                    slot.hour === 8.5
+                      ? 'border-sky-500/50 bg-sky-950/10'
+                      : 'border-slate-800/60 bg-slate-950/30'
+                  } relative group-hover/projrow:bg-slate-900/30`}
                 >
                   {slot.hasMidTick && (
                     <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
@@ -257,11 +261,11 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
               {[13, 14, 15, 16, 17].map((hour) => (
                 <div
                   key={hour}
-                  style={{ width: hourWidth }}
+                  style={{ width: hour === 17 && collapseOvertime ? hourWidth * 0.5 : hourWidth }}
                   className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
                 >
                   <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
-                  {hour === 17 && (
+                  {hour === 17 && !collapseOvertime && (
                     <>
                       <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500/80 z-10 pointer-events-none" />
                       <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-950/15 pointer-events-none" />

@@ -12,16 +12,17 @@ export const TOTAL_HOURS = END_HOUR - START_HOUR; // 13.5 hours (08:30 - 22:00)
 export interface MorningSlot {
   hour: number;
   label: string;
+  endLabel?: string;
   span: number; // in hours (0.5h or 1.0h)
   sub: string;
   hasMidTick?: boolean;
 }
 
 export const MORNING_SLOTS: MorningSlot[] = [
-  { hour: 8.5, label: '08:30', span: 0.5, sub: '上班起', hasMidTick: false },
-  { hour: 9, label: '09:00', span: 1.0, sub: '+1h', hasMidTick: true },
-  { hour: 10, label: '10:00', span: 1.0, sub: '+1h', hasMidTick: true },
-  { hour: 11, label: '11:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 8.5, label: '08:30', endLabel: '09:00', span: 0.5, sub: '0.5h', hasMidTick: false },
+  { hour: 9, label: '09:00', endLabel: '10:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 10, label: '10:00', endLabel: '11:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 11, label: '11:00', endLabel: '12:00', span: 1.0, sub: '+1h', hasMidTick: true },
 ];
 
 // Collapsed widths for lunch break and overtime periods
