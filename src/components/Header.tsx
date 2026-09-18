@@ -7,7 +7,9 @@ import {
   HelpCircle,
   FolderKanban,
   Layers,
-  Filter
+  Filter,
+  Coffee,
+  Moon
 } from 'lucide-react';
 import { DaySchedule, Project, ViewGroupingMode, ZoomLevel } from '../types';
 import { ZOOM_CONFIG } from '../constants';
@@ -22,6 +24,10 @@ interface HeaderProps {
   onViewModeChange: (mode: ViewGroupingMode) => void;
   selectedProjectFilter: string;
   onProjectFilterChange: (id: string) => void;
+  collapseLunch: boolean;
+  onToggleCollapseLunch: () => void;
+  collapseOvertime: boolean;
+  onToggleCollapseOvertime: () => void;
   onAddDay: () => void;
   onOpenNewTaskModal: (targetDayId?: string, targetProjectId?: string) => void;
   onOpenProjectModal: () => void;
@@ -38,6 +44,10 @@ export const Header: React.FC<HeaderProps> = ({
   onViewModeChange,
   selectedProjectFilter,
   onProjectFilterChange,
+  collapseLunch,
+  onToggleCollapseLunch,
+  collapseOvertime,
+  onToggleCollapseOvertime,
   onAddDay,
   onOpenNewTaskModal,
   onOpenProjectModal,
@@ -48,15 +58,17 @@ export const Header: React.FC<HeaderProps> = ({
   let totalTasks = 0;
   let totalNormalHours = 0;
   let totalOvertimeHours = 0;
+  let totalLunchBreakHours = 0;
 
   days.forEach((day) => {
     day.tasks.forEach((task) => {
       // If filtering by project, only count matched tasks
       if (selectedProjectFilter === 'all' || task.projectId === selectedProjectFilter) {
         totalTasks += 1;
-        const { normalHours, overtimeHours } = calculateTaskHours(task.startHour, task.duration);
+        const { normalHours, overtimeHours, lunchBreakHours } = calculateTaskHours(task.startHour, task.duration);
         totalNormalHours += normalHours;
         totalOvertimeHours += overtimeHours;
+        totalLunchBreakHours += lunchBreakHours;
       }
     });
   });
@@ -80,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
-                正常工時 08:00 ~ 18:00・加班時段 18:00 ~ 22:00 (不同專案以獨立列呈現)
+                正常工時 08:30 ~ 17:30 (午休 12:00 ~ 13:00 不計)・加班時段 17:30 ~ 22:00
               </p>
             </div>
           </div>
@@ -164,6 +176,35 @@ export const Header: React.FC<HeaderProps> = ({
               ))}
             </div>
 
+            {/* Collapse Lunch & Overtime Controls */}
+            <div className="flex items-center gap-1 bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs">
+              <button
+                onClick={onToggleCollapseLunch}
+                className={`px-2 py-1 rounded transition-colors flex items-center gap-1.5 font-medium ${
+                  collapseLunch
+                    ? 'bg-amber-600 text-white shadow-xs font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title={collapseLunch ? '點擊展開午休時段 (12:00-13:00)' : '收折午休時段 (12:00-13:00) 節省版面空間'}
+              >
+                <Coffee className={`w-3.5 h-3.5 ${collapseLunch ? 'text-amber-200' : 'text-slate-400'}`} />
+                <span>{collapseLunch ? '午休已收折' : '收折午休'}</span>
+              </button>
+
+              <button
+                onClick={onToggleCollapseOvertime}
+                className={`px-2 py-1 rounded transition-colors flex items-center gap-1.5 font-medium ${
+                  collapseOvertime
+                    ? 'bg-amber-600 text-white shadow-xs font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title={collapseOvertime ? '點擊展開加班時段 (17:30-22:00)' : '收折加班時段 (17:30-22:00) 節省版面空間'}
+              >
+                <Moon className={`w-3.5 h-3.5 ${collapseOvertime ? 'text-amber-200' : 'text-slate-400'}`} />
+                <span>{collapseOvertime ? '加班已收折' : '收折加班'}</span>
+              </button>
+            </div>
+
             {/* Project Management Button */}
             <button
               onClick={onOpenProjectModal}
@@ -238,21 +279,31 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-sky-400"></div>
             <span className="text-slate-300">正常工時合計:</span>
-            <span className="text-sky-300 font-bold">{totalNormalHours} 小時</span>
+            <span className="text-sky-300 font-bold font-mono">{totalNormalHours} 小時</span>
           </div>
+
+          {totalLunchBreakHours > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">☕ 午休不計合計:</span>
+              <span className="text-amber-300 font-medium font-mono">{totalLunchBreakHours} 小時</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
             <span className="text-slate-300">加班時段合計:</span>
-            <span className="text-amber-300 font-bold">{totalOvertimeHours} 小時</span>
+            <span className="text-amber-300 font-bold font-mono">{totalOvertimeHours} 小時</span>
           </div>
 
           <div className="ml-auto hidden md:flex items-center gap-3 text-slate-500 text-[11px]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-sm bg-slate-600"></span> 08:00 - 18:00 正常時段 (10hr)
+              <span className="w-2 h-2 rounded-sm bg-sky-500"></span> 08:30 - 17:30 正常時段 (8hr)
+            </span>
+            <span className="flex items-center gap-1 text-slate-400">
+              <span className="w-2 h-2 rounded-sm bg-slate-600"></span> 12:00 - 13:00 午休不計 (1hr)
             </span>
             <span className="flex items-center gap-1 text-amber-400/80">
-              <span className="w-2 h-2 rounded-sm bg-amber-500"></span> 18:00 - 22:00 加班時段 (4hr)
+              <span className="w-2 h-2 rounded-sm bg-amber-500"></span> 17:30 - 22:00 加班時段
             </span>
           </div>
         </div>

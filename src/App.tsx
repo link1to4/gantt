@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DaySchedule, Project, Task, ViewGroupingMode, ZoomLevel } from './types';
 import { DEFAULT_DAYS, DEFAULT_PROJECTS, ZOOM_CONFIG, START_HOUR, TOTAL_HOURS } from './constants';
+import { getDayWidth } from './utils/time';
 import { Header } from './components/Header';
 import { TimelineHeader } from './components/TimelineHeader';
 import { ContinuousTimelineHeader } from './components/ContinuousTimelineHeader';
@@ -10,10 +11,12 @@ import { ProjectViewRow } from './components/ProjectViewRow';
 import { TaskModal } from './components/TaskModal';
 import { ProjectModal } from './components/ProjectModal';
 import { HelpModal } from './components/HelpModal';
-import { Plus, FolderPlus, Layers, CalendarRange } from 'lucide-react';
+import { Plus, FolderPlus, Layers, CalendarRange, Coffee, Moon } from 'lucide-react';
 
 const DAYS_STORAGE_KEY = 'gantt_chart_scheduler_days_v3';
 const PROJECTS_STORAGE_KEY = 'gantt_chart_scheduler_projects_v3';
+const COLLAPSE_LUNCH_KEY = 'gantt_collapse_lunch_v1';
+const COLLAPSE_OVERTIME_KEY = 'gantt_collapse_overtime_v1';
 
 export default function App() {
   // Projects state
@@ -60,6 +63,23 @@ export default function App() {
   const [helpModalOpen, setHelpModalOpen] = useState<boolean>(false);
   const [projectModalOpen, setProjectModalOpen] = useState<boolean>(false);
 
+  // Collapsible Lunch (12:00~13:00) and Overtime (17:30~22:00)
+  const [collapseLunch, setCollapseLunch] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_LUNCH_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [collapseOvertime, setCollapseOvertime] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(COLLAPSE_OVERTIME_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [taskModalState, setTaskModalState] = useState<{
     isOpen: boolean;
     dayId?: string;
@@ -89,8 +109,25 @@ export default function App() {
     }
   }, [days]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_LUNCH_KEY, String(collapseLunch));
+    } catch {
+      // ignore
+    }
+  }, [collapseLunch]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLLAPSE_OVERTIME_KEY, String(collapseOvertime));
+    } catch {
+      // ignore
+    }
+  }, [collapseOvertime]);
+
   const hourWidth = ZOOM_CONFIG[zoom].hourWidth;
   const sidebarWidth = 230;
+  const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
 
   // Filtered projects based on header filter
   const visibleProjects =
@@ -328,6 +365,10 @@ export default function App() {
         onViewModeChange={setViewMode}
         selectedProjectFilter={selectedProjectFilter}
         onProjectFilterChange={setSelectedProjectFilter}
+        collapseLunch={collapseLunch}
+        onToggleCollapseLunch={() => setCollapseLunch((prev) => !prev)}
+        collapseOvertime={collapseOvertime}
+        onToggleCollapseOvertime={() => setCollapseOvertime((prev) => !prev)}
         onAddDay={handleAddDay}
         onOpenNewTaskModal={(dayId, projId) =>
           handleAddTask(dayId, 9, projId)
@@ -347,8 +388,8 @@ export default function App() {
               style={{
                 minWidth: `${
                   viewMode === 'continuous'
-                    ? sidebarWidth + days.length * TOTAL_HOURS * hourWidth + 140
-                    : sidebarWidth + TOTAL_HOURS * hourWidth
+                    ? sidebarWidth + days.length * dayWidth + 140
+                    : sidebarWidth + dayWidth
                 }px`,
               }}
               className="relative flex flex-col"
@@ -360,6 +401,10 @@ export default function App() {
                     days={days}
                     hourWidth={hourWidth}
                     sidebarWidth={sidebarWidth}
+                    collapseLunch={collapseLunch}
+                    onToggleCollapseLunch={() => setCollapseLunch((prev) => !prev)}
+                    collapseOvertime={collapseOvertime}
+                    onToggleCollapseOvertime={() => setCollapseOvertime((prev) => !prev)}
                     onAddDay={handleAddDay}
                     onUpdateDay={handleUpdateDay}
                     onDeleteDay={handleDeleteDay}
@@ -374,6 +419,8 @@ export default function App() {
                         days={days}
                         hourWidth={hourWidth}
                         sidebarWidth={sidebarWidth}
+                        collapseLunch={collapseLunch}
+                        collapseOvertime={collapseOvertime}
                         onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
                         onUpdateTask={handleUpdateTask}
                         onDeleteTask={handleDeleteTask}
@@ -390,6 +437,10 @@ export default function App() {
                   <TimelineHeader
                     hourWidth={hourWidth}
                     sidebarWidth={sidebarWidth}
+                    collapseLunch={collapseLunch}
+                    onToggleCollapseLunch={() => setCollapseLunch((prev) => !prev)}
+                    collapseOvertime={collapseOvertime}
+                    onToggleCollapseOvertime={() => setCollapseOvertime((prev) => !prev)}
                   />
 
                   {viewMode === 'by-day' ? (
@@ -404,6 +455,8 @@ export default function App() {
                           projects={visibleProjects}
                           hourWidth={hourWidth}
                           sidebarWidth={sidebarWidth}
+                          collapseLunch={collapseLunch}
+                          collapseOvertime={collapseOvertime}
                           onUpdateDay={handleUpdateDay}
                           onDeleteDay={handleDeleteDay}
                           onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
@@ -424,6 +477,8 @@ export default function App() {
                           days={days}
                           hourWidth={hourWidth}
                           sidebarWidth={sidebarWidth}
+                          collapseLunch={collapseLunch}
+                          collapseOvertime={collapseOvertime}
                           onUpdateProject={handleUpdateProject}
                           onDeleteProject={handleDeleteProject}
                           onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
@@ -441,19 +496,43 @@ export default function App() {
 
           {/* Quick Bottom Bar */}
           <div className="px-4 sm:px-6 py-3 bg-slate-900/95 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+              <span className="flex items-center gap-1.5 font-medium text-slate-300">
                 <span className="w-2.5 h-2.5 rounded-sm bg-sky-500"></span>
-                <span>正常工時 (08:00 - 18:00)</span>
+                <span>正常工時 (08:30 - 17:30，共 8h)</span>
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
-                <span className="text-amber-300 font-medium">加班時段 (18:00 - 22:00)</span>
-              </span>
-              <span className="hidden md:inline text-slate-500">|</span>
-              <span className="hidden md:inline text-slate-400">
-                💡 連續 X 軸模式下，時間軸沿 X 軸跨日延伸 (Day 1 ➔ Day 2 ➔ Day 3...)，方塊支援 30 分鐘微調與跨日橫向拖拉！
-              </span>
+
+              <button
+                onClick={() => setCollapseLunch((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition ${
+                  collapseLunch 
+                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/50' 
+                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                }`}
+                title="點擊切換午休時段收折"
+              >
+                <Coffee className="w-3 h-3 text-amber-400" />
+                <span>午休 (12:00 - 13:00 不計工時)</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-slate-900 text-amber-400">
+                  {collapseLunch ? '已收折' : '點擊收折'}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setCollapseOvertime((prev) => !prev)}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition ${
+                  collapseOvertime 
+                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/50' 
+                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                }`}
+                title="點擊切換加班時段收折"
+              >
+                <Moon className="w-3 h-3 text-amber-400" />
+                <span>加班 (17:30 - 22:00)</span>
+                <span className="text-[10px] font-mono px-1 rounded bg-slate-900 text-amber-400">
+                  {collapseOvertime ? '已收折' : '點擊收折'}
+                </span>
+              </button>
             </div>
 
             <div className="flex items-center gap-3">

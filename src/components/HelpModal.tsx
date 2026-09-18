@@ -71,7 +71,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
           <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-800/60 text-amber-200/90 text-xs flex items-center gap-2.5">
             <Moon className="w-4 h-4 text-amber-400 flex-shrink-0" />
             <span>
-              <strong>正常與加班時段：</strong> 08:00 ~ 18:00 為正常工時，18:00 ~ 22:00 為加班時段，系統會自動在方塊上標記加班時數並統計於頂部資訊列。
+              <strong>工時與休息規則：</strong> 正常工時為 08:30 ~ 17:30，中午 12:00 ~ 13:00 為休息時間不計算工時；17:30 ~ 22:00 為加班時段。跨午休排程會自動扣除 1 小時休息時間，並於頂部資訊列與方塊上精準統計。
             </span>
           </div>
         </div>

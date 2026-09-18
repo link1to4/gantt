@@ -1,8 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { GripVertical, Pencil, X, Moon, Clock } from 'lucide-react';
+import { GripVertical, Pencil, X, Moon, Clock, Coffee } from 'lucide-react';
 import { Task, DragMode, DaySchedule } from '../types';
 import { START_HOUR, END_HOUR, OVERTIME_HOUR, TOTAL_HOURS, COLOR_OPTIONS } from '../constants';
-import { formatTimeRange, calculateTaskHours, clampTaskBounds } from '../utils/time';
+import { 
+  formatTimeRange, 
+  calculateTaskHours, 
+  clampTaskBounds, 
+  getDayWidth, 
+  hourToDayX, 
+  dayXToHour, 
+  getTaskPositionAndWidth 
+} from '../utils/time';
 
 interface TaskBlockProps {
   task: Task;
@@ -11,6 +19,8 @@ interface TaskBlockProps {
   rowHeight: number;
   continuousDays?: DaySchedule[];
   dayIndex?: number;
+  collapseLunch?: boolean;
+  collapseOvertime?: boolean;
   onUpdateTask: (dayId: string, taskId: string, updates: Partial<Task>) => void;
   onDeleteTask: (dayId: string, taskId: string) => void;
   onOpenEditModal: (dayId: string, task: Task) => void;
@@ -30,6 +40,8 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
   rowHeight,
   continuousDays,
   dayIndex,
+  collapseLunch = false,
+  collapseOvertime = false,
   onUpdateTask,
   onDeleteTask,
   onOpenEditModal,
@@ -50,25 +62,33 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
   const blockRef = useRef<HTMLDivElement>(null);
 
   const isContinuous = typeof dayIndex === 'number' && continuousDays && continuousDays.length > 0;
-  const dayWidth = TOTAL_HOURS * hourWidth;
+  const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
   const currentDayIndex = isContinuous ? dayIndex : 0;
 
   // Active or preview values
   const currentStart = dragState ? dragState.previewStart : task.startHour;
   const currentDuration = dragState ? dragState.previewDuration : task.duration;
 
-  // Geometry: 0.5h minimum width = (hourWidth * 0.5) - 6
-  const minBlockWidth = Math.max(26, Math.round(hourWidth * 0.5) - 6);
   const activeDayIndex = dragState?.targetDayIndex ?? currentDayIndex;
   const dayBaseLeft = isContinuous ? activeDayIndex * dayWidth : 0;
-  const leftPx = dayBaseLeft + (currentStart - START_HOUR) * hourWidth + 3;
-  const widthPx = Math.max(minBlockWidth, currentDuration * hourWidth - 6);
+
+  const { left: taskRelLeft, width: taskCalculatedWidth } = getTaskPositionAndWidth(
+    currentStart,
+    currentDuration,
+    hourWidth,
+    collapseLunch,
+    collapseOvertime
+  );
+
+  const leftPx = dayBaseLeft + taskRelLeft;
+  const widthPx = taskCalculatedWidth;
   const trackIndex = task.trackIndex || 0;
   const topPx = trackIndex * (rowHeight + 8) + 8;
 
-  // Overtime calculations
-  const { normalHours, overtimeHours } = calculateTaskHours(currentStart, currentDuration);
+  // Overtime & Lunch calculations
+  const { normalHours, overtimeHours, lunchBreakHours, effectiveHours } = calculateTaskHours(currentStart, currentDuration);
   const hasOvertime = overtimeHours > 0;
+  const hasLunchBreak = lunchBreakHours > 0;
 
   const colorKey = task.color || 'blue';
   const colorMeta = COLOR_OPTIONS[colorKey] || COLOR_OPTIONS.blue;
@@ -102,18 +122,17 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
           : moveEvent.clientX;
 
       const deltaX = currentX - initial.startClientX;
-      const halfHourWidth = hourWidth / 2;
 
       if (mode === 'move') {
+        const initialInDayX = hourToDayX(initial.initialStart, hourWidth, collapseLunch, collapseOvertime);
         if (isContinuous && continuousDays && onMoveTaskAcrossDays) {
           // Cross-day continuous horizontal movement
-          const initialAbsX = currentDayIndex * dayWidth + (initial.initialStart - START_HOUR) * hourWidth;
+          const initialAbsX = currentDayIndex * dayWidth + initialInDayX;
           const newAbsX = initialAbsX + deltaX;
           const targetDayIdx = Math.floor(newAbsX / dayWidth);
           const clampedDayIdx = Math.max(0, Math.min(continuousDays.length - 1, targetDayIdx));
           const inDayX = newAbsX - clampedDayIdx * dayWidth;
-          const deltaHalfHours = Math.round(inDayX / halfHourWidth);
-          const rawStart = START_HOUR + deltaHalfHours * 0.5;
+          const rawStart = dayXToHour(inDayX, hourWidth, collapseLunch, collapseOvertime);
           const maxStart = END_HOUR - initial.initialDuration;
           const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawStart));
 
@@ -131,11 +150,10 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
           );
         } else {
           // Within-day movement
-          const deltaHalfHours = Math.round(deltaX / halfHourWidth);
-          const deltaHours = deltaHalfHours * 0.5;
-          const rawNewStart = initial.initialStart + deltaHours;
+          const newInDayX = initialInDayX + deltaX;
+          const rawStart = dayXToHour(newInDayX, hourWidth, collapseLunch, collapseOvertime);
           const maxStart = END_HOUR - initial.initialDuration;
-          const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawNewStart));
+          const boundedStart = Math.max(START_HOUR, Math.min(maxStart, rawStart));
 
           setDragState((prev) =>
             prev
@@ -148,12 +166,11 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
           );
         }
       } else if (mode === 'resize-end') {
-        const deltaHalfHours = Math.round(deltaX / halfHourWidth);
-        const deltaHours = deltaHalfHours * 0.5;
-        const rawNewDuration = initial.initialDuration + deltaHours;
-        const maxDuration = END_HOUR - initial.initialStart;
-        // Minimum duration is 0.5 hour (30 mins)
-        const boundedDuration = Math.max(0.5, Math.min(maxDuration, rawNewDuration));
+        const initialInDayEndX = hourToDayX(initial.initialStart + initial.initialDuration, hourWidth, collapseLunch, collapseOvertime);
+        const newInDayEndX = initialInDayEndX + deltaX;
+        const rawEnd = dayXToHour(newInDayEndX, hourWidth, collapseLunch, collapseOvertime);
+        const boundedEnd = Math.max(initial.initialStart + 0.5, Math.min(END_HOUR, rawEnd));
+        const boundedDuration = Math.round((boundedEnd - initial.initialStart) * 10) / 10;
 
         setDragState((prev) =>
           prev
@@ -165,12 +182,11 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
             : null
         );
       } else if (mode === 'resize-start') {
-        const deltaHalfHours = Math.round(deltaX / halfHourWidth);
-        const deltaHours = deltaHalfHours * 0.5;
         const originalEnd = initial.initialStart + initial.initialDuration;
-        const rawNewStart = initial.initialStart + deltaHours;
-        // Start cannot exceed originalEnd - 0.5
-        const boundedStart = Math.max(START_HOUR, Math.min(originalEnd - 0.5, rawNewStart));
+        const initialInDayStartX = hourToDayX(initial.initialStart, hourWidth, collapseLunch, collapseOvertime);
+        const newInDayStartX = initialInDayStartX + deltaX;
+        const rawStart = dayXToHour(newInDayStartX, hourWidth, collapseLunch, collapseOvertime);
+        const boundedStart = Math.max(START_HOUR, Math.min(originalEnd - 0.5, rawStart));
         const boundedDuration = Math.round((originalEnd - boundedStart) * 10) / 10;
 
         setDragState((prev) =>
@@ -298,6 +314,15 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
                 {task.name}
               </span>
 
+              {hasLunchBreak && !isCompact && (
+                <span
+                  className="hidden md:inline-flex items-center gap-0.5 text-[9px] px-1 py-0.2 rounded bg-slate-900/90 text-amber-300 font-semibold border border-amber-500/30 shadow-xs flex-shrink-0"
+                  title={`跨中午休息 12:00~13:00，已扣除 ${lunchBreakHours}h 不計工時`}
+                >
+                  扣午休 {lunchBreakHours}h
+                </span>
+              )}
+
               {hasOvertime && !isCompact && (
                 <span
                   className="hidden sm:inline-flex items-center gap-0.5 text-[9px] px-1 py-0.2 rounded bg-amber-500 text-slate-900 font-bold shadow-xs flex-shrink-0"
@@ -313,7 +338,7 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
               <div className="flex items-center gap-1 text-[10px] text-white/80 font-mono">
                 <Clock className="w-2.5 h-2.5 text-white/60" />
                 <span className="truncate">{formatTimeRange(currentStart, currentDuration)}</span>
-                <span>({currentDuration}h)</span>
+                <span>(計 {effectiveHours}h{hasLunchBreak ? `，扣午休` : ''})</span>
               </div>
             )}
           </div>
@@ -371,9 +396,14 @@ export const TaskBlock: React.FC<TaskBlockProps> = ({
             {formatTimeRange(currentStart, currentDuration)}
           </span>
           <span className="text-slate-400">|</span>
-          <span className="font-semibold">{currentDuration} 小時</span>
+          <span className="font-semibold">計工時 {effectiveHours}h</span>
+          {hasLunchBreak && (
+            <span className="text-emerald-400 font-semibold text-[11px]">
+              (扣午休 {lunchBreakHours}h)
+            </span>
+          )}
           {hasOvertime && (
-            <span className="text-amber-400 font-bold flex items-center gap-0.5">
+            <span className="text-amber-400 font-bold flex items-center gap-0.5 text-[11px]">
               (含加班 {overtimeHours}h)
             </span>
           )}

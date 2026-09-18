@@ -70,7 +70,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   if (!isOpen) return null;
 
   const endHour = startHour + duration;
-  const { normalHours, overtimeHours } = calculateTaskHours(startHour, duration);
+  const { normalHours, overtimeHours, lunchBreakHours, effectiveHours } = calculateTaskHours(startHour, duration);
+
+  const getHourTag = (h: number) => {
+    if (h === 8.5) return ' (上班起)';
+    if (h === 12) return ' (午休起)';
+    if (h === 13) return ' (午休迄)';
+    if (h === 17.5) return ' (加班起)';
+    if (h > 17.5) return ' (加班)';
+    return '';
+  };
 
   const handleStartHourChange = (newStart: number) => {
     setStartHour(newStart);
@@ -236,7 +245,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   const h = START_HOUR + i * 0.5;
                   return (
                     <option key={h} value={h}>
-                      {formatHour(h)} {h >= OVERTIME_HOUR ? '(加班)' : ''}
+                      {formatHour(h)}{getHourTag(h)}
                     </option>
                   );
                 })}
@@ -258,7 +267,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                   const dur = Math.round((h - startHour) * 10) / 10;
                   return (
                     <option key={h} value={h}>
-                      {formatHour(h)} ({dur}h)
+                      {formatHour(h)} ({dur}h){getHourTag(h)}
                     </option>
                   );
                 })}
@@ -267,18 +276,30 @@ export const TaskModal: React.FC<TaskModalProps> = ({
           </div>
 
           {/* Time Summary Breakdown Card */}
-          <div className="p-3 bg-slate-800/60 border border-slate-700/80 rounded-xl flex items-center justify-between text-xs">
+          <div className="p-3 bg-slate-800/60 border border-slate-700/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-slate-400">總持續時間:</span>
+              <span className="text-slate-400">總持續:</span>
               <span className="font-bold text-white font-mono text-sm">
-                {duration} 小時
+                {duration}h
+              </span>
+              <span className="text-slate-400 ml-1">計工時:</span>
+              <span className="font-bold text-sky-400 font-mono text-sm">
+                {effectiveHours}h
               </span>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="px-2 py-0.5 rounded bg-sky-950/60 border border-sky-800 text-sky-300">
                 正常: {normalHours}h
               </span>
+              {lunchBreakHours > 0 && (
+                <span
+                  className="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/40 text-amber-300 font-medium flex items-center gap-1"
+                  title="中午 12:00~13:00 為休息時間，不計入工時"
+                >
+                  ☕ 扣午休: {lunchBreakHours}h
+                </span>
+              )}
               {overtimeHours > 0 ? (
                 <span className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800 text-amber-300 font-bold flex items-center gap-1">
                   <Moon className="w-3 h-3" /> 加班: {overtimeHours}h
@@ -289,6 +310,12 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Working hours rule hint */}
+          <div className="text-[11px] text-slate-400 bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-800 flex items-center gap-2">
+            <span className="text-sky-400 font-bold font-mono">工時說明:</span>
+            <span>正常 08:30~17:30，午休 12:00~13:00 不計算工時，17:30 後為加班。</span>
           </div>
 
           {/* Color Selection */}

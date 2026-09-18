@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Edit2, Check, FolderKanban, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, FolderKanban, ChevronDown, ChevronRight, Sparkles, Coffee, Moon } from 'lucide-react';
 import { DaySchedule, Project, Task } from '../types';
-import { START_HOUR, OVERTIME_HOUR, END_HOUR, TOTAL_HOURS, COLOR_OPTIONS } from '../constants';
-import { assignTracksToTasks, calculateTaskHours } from '../utils/time';
+import { 
+  START_HOUR, 
+  OVERTIME_HOUR, 
+  END_HOUR, 
+  TOTAL_HOURS, 
+  COLOR_OPTIONS,
+  COLLAPSED_LUNCH_WIDTH,
+  COLLAPSED_OVERTIME_WIDTH
+} from '../constants';
+import { assignTracksToTasks, calculateTaskHours, getDayWidth, dayXToHour } from '../utils/time';
 import { TaskBlock } from './TaskBlock';
 
 interface DayRowProps {
@@ -12,6 +20,8 @@ interface DayRowProps {
   projects: Project[];
   hourWidth: number;
   sidebarWidth: number;
+  collapseLunch?: boolean;
+  collapseOvertime?: boolean;
   onUpdateDay: (dayId: string, updates: Partial<DaySchedule>) => void;
   onDeleteDay: (dayId: string) => void;
   onAddTaskToDay: (dayId: string, defaultStartHour?: number, defaultProjectId?: string) => void;
@@ -28,6 +38,8 @@ export const DayRow: React.FC<DayRowProps> = ({
   projects,
   hourWidth,
   sidebarWidth,
+  collapseLunch = false,
+  collapseOvertime = false,
   onUpdateDay,
   onDeleteDay,
   onAddTaskToDay,
@@ -41,6 +53,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const TASK_ROW_HEIGHT = 44;
+  const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
 
   // Calculate day-wide statistics
   let dayNormalHours = 0;
@@ -196,9 +209,7 @@ export const DayRow: React.FC<DayRowProps> = ({
               ) return;
               const rect = e.currentTarget.getBoundingClientRect();
               const clickX = e.clientX - rect.left;
-              const halfHourWidth = hourWidth / 2;
-              const halfSteps = Math.floor(clickX / halfHourWidth);
-              const clickedHour = START_HOUR + halfSteps * 0.5;
+              const clickedHour = dayXToHour(clickX, hourWidth, collapseLunch, collapseOvertime);
               const safeHour = Math.max(
                 START_HOUR,
                 Math.min(END_HOUR - 0.5, clickedHour)
@@ -265,7 +276,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                 {/* Right Timeline Canvas for this Project */}
                 <div
                   style={{
-                    width: TOTAL_HOURS * hourWidth,
+                    width: dayWidth,
                     height: `${rowHeightPx}px`,
                   }}
                   onClick={handleRowGridClick}
@@ -274,29 +285,80 @@ export const DayRow: React.FC<DayRowProps> = ({
                 >
                   {/* Hourly vertical background gridlines */}
                   <div className="absolute inset-0 flex pointer-events-none">
-                    {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
-                      const hour = START_HOUR + i;
-                      const isOvertime = hour >= OVERTIME_HOUR;
+                    {/* Morning Hours 8, 9, 10, 11 */}
+                    {[8, 9, 10, 11].map((hour) => (
+                      <div
+                        key={hour}
+                        style={{ width: hourWidth }}
+                        className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
+                      >
+                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                        {hour === 8 && (
+                          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-sky-400/50 z-10 pointer-events-none" />
+                        )}
+                      </div>
+                    ))}
 
-                      return (
+                    {/* Lunch Break */}
+                    {collapseLunch ? (
+                      <div
+                        style={{ width: COLLAPSED_LUNCH_WIDTH }}
+                        className="flex-shrink-0 h-full border-r border-slate-700/60 bg-amber-950/20 group-hover/projrow:bg-amber-950/30 relative flex items-center justify-center overflow-hidden"
+                        title="午休時段已收折 (12:00~13:00)"
+                      >
+                        <div className="text-[10px] text-amber-400/40 font-mono select-none">☕</div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{ width: hourWidth }}
+                        className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-800/35 group-hover/projrow:bg-slate-800/50 flex items-center justify-center"
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center opacity-30 select-none pointer-events-none">
+                          <span className="text-[10px] text-amber-300/80 font-mono tracking-wider rotate-90 sm:rotate-0">
+                            ☕午休不計
+                          </span>
+                        </div>
+                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                      </div>
+                    )}
+
+                    {/* Afternoon Hours 13, 14, 15, 16, 17 */}
+                    {[13, 14, 15, 16, 17].map((hour) => (
+                      <div
+                        key={hour}
+                        style={{ width: hourWidth }}
+                        className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
+                      >
+                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                        {hour === 17 && (
+                          <>
+                            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500/80 z-10 pointer-events-none" />
+                            <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-950/15 pointer-events-none" />
+                          </>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Overtime Hours or Collapsed */}
+                    {collapseOvertime ? (
+                      <div
+                        style={{ width: COLLAPSED_OVERTIME_WIDTH }}
+                        className="flex-shrink-0 h-full border-r border-slate-700/60 bg-amber-950/30 group-hover/projrow:bg-amber-950/40 relative flex items-center justify-center overflow-hidden"
+                        title="加班時段已收折 (17:30~22:00)"
+                      >
+                        <div className="text-[10px] text-amber-400/40 font-mono select-none">🌙</div>
+                      </div>
+                    ) : (
+                      [18, 19, 20, 21].map((hour) => (
                         <div
                           key={hour}
                           style={{ width: hourWidth }}
-                          className={`flex-shrink-0 h-full border-r border-slate-800/60 relative ${
-                            isOvertime
-                              ? 'bg-amber-950/10 group-hover/projrow:bg-amber-950/20'
-                              : 'bg-slate-950/30 group-hover/projrow:bg-slate-900/30'
-                          }`}
+                          className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-amber-950/10 group-hover/projrow:bg-amber-950/20"
                         >
-                          {/* 30-minute midpoint subtle guideline */}
                           <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
-
-                          {hour === OVERTIME_HOUR && (
-                            <div className="absolute -left-[1px] top-0 bottom-0 w-[2px] bg-amber-500/70 z-10"></div>
-                          )}
                         </div>
-                      );
-                    })}
+                      ))
+                    )}
                   </div>
 
                   {/* Tasks rendered on this Project Row */}
@@ -311,6 +373,8 @@ export const DayRow: React.FC<DayRowProps> = ({
                           dayId={day.id}
                           hourWidth={hourWidth}
                           rowHeight={TASK_ROW_HEIGHT}
+                          collapseLunch={collapseLunch}
+                          collapseOvertime={collapseOvertime}
                           onUpdateTask={onUpdateTask}
                           onDeleteTask={onDeleteTask}
                           onOpenEditModal={onOpenEditModal}

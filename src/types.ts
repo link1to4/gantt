@@ -57,3 +57,8 @@ export interface ActiveDragInfo {
 
 export type ZoomLevel = 'compact' | 'normal' | 'spacious';
 export type ViewGroupingMode = 'continuous' | 'by-day' | 'by-project';
+
+export interface TimelineCollapseConfig {
+  collapseLunch: boolean;
+  collapseOvertime: boolean;
+}
