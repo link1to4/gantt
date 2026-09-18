@@ -346,15 +346,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                     ))}
 
                     {/* Overtime Hours or Collapsed */}
-                    {collapseOvertime ? (
-                      <div
-                        style={{ width: COLLAPSED_OVERTIME_WIDTH }}
-                        className="flex-shrink-0 h-full border-r border-slate-700/60 bg-amber-950/30 group-hover/projrow:bg-amber-950/40 relative flex items-center justify-center overflow-hidden"
-                        title="加班時段已收折 (17:30~22:00)"
-                      >
-                        <div className="text-[10px] text-amber-400/40 font-mono select-none">🌙</div>
-                      </div>
-                    ) : (
+                    {collapseOvertime ? null : (
                       [18, 19, 20, 21].map((hour) => (
                         <div
                           key={hour}

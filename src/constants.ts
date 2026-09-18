@@ -26,7 +26,7 @@ export const MORNING_SLOTS: MorningSlot[] = [
 
 // Collapsed widths for lunch break and overtime periods
 export const COLLAPSED_LUNCH_WIDTH = 28; // 28px compact folded accordion strip for 12:00 - 13:00
-export const COLLAPSED_OVERTIME_WIDTH = 36; // 36px compact folded accordion strip for 17:30 - 22:00
+export const COLLAPSED_OVERTIME_WIDTH = 0; // 0px completely collapsed (hidden) for 17:30 - 22:00
 
 export const ZOOM_CONFIG: Record<ZoomLevel, { label: string; hourWidth: number }> = {
   compact: { label: '緊湊', hourWidth: 54 },

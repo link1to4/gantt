@@ -109,17 +109,7 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
         </div>
 
         {/* Overtime hours indicator strip (17:30 - 22:00) */}
-        {collapseOvertime ? (
-          <div
-            style={{ width: COLLAPSED_OVERTIME_WIDTH }}
-            onClick={onToggleCollapseOvertime}
-            className="flex-shrink-0 bg-amber-950/50 hover:bg-amber-900/70 text-amber-300 flex flex-col items-center justify-center cursor-pointer transition py-0.5 group/foldOt"
-            title="加班時段已收折 (17:30~22:00)，點擊展開"
-          >
-            <Moon className="w-3.5 h-3.5 text-amber-400 group-hover/foldOt:scale-110 transition-transform" />
-            <span className="text-[8px] font-mono text-amber-300 font-bold leading-tight">展開</span>
-          </div>
-        ) : (
+        {collapseOvertime ? null : (
           <div
             style={{ width: overtimeSpan * hourWidth }}
             className="flex-shrink-0 bg-amber-950/40 text-amber-300 px-2 py-1.5 flex items-center justify-between group/ot"
@@ -242,17 +232,7 @@ export const TimelineHeader: React.FC<TimelineHeaderProps> = ({
           ))}
 
           {/* Overtime Hours or Collapsed Strip */}
-          {collapseOvertime ? (
-            <div
-              style={{ width: COLLAPSED_OVERTIME_WIDTH }}
-              onClick={onToggleCollapseOvertime}
-              className="flex-shrink-0 border-r border-slate-700/80 bg-amber-950/30 hover:bg-amber-950/50 flex flex-col items-center justify-center cursor-pointer text-amber-300 py-1 transition"
-              title="17:30~22:00 加班時段 (點擊展開)"
-            >
-              <Moon className="w-3 h-3 text-amber-400" />
-              <span className="text-[8px] font-mono mt-0.5 text-amber-300 font-bold">加班</span>
-            </div>
-          ) : (
+          {collapseOvertime ? null : (
             <>
               {[18, 19, 20, 21].map((hour) => (
                 <div
