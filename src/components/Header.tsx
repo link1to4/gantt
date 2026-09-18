@@ -16,6 +16,7 @@ import {
 import { DaySchedule, Project, ViewGroupingMode, ZoomLevel } from '../types';
 import { ZOOM_CONFIG } from '../constants';
 import { calculateTaskHours } from '../utils/time';
+import { ProjectMultiSelectFilter } from './ProjectMultiSelectFilter';
 
 interface HeaderProps {
   days: DaySchedule[];
@@ -24,8 +25,8 @@ interface HeaderProps {
   onZoomChange: (zoom: ZoomLevel) => void;
   viewMode: ViewGroupingMode;
   onViewModeChange: (mode: ViewGroupingMode) => void;
-  selectedProjectFilter: string;
-  onProjectFilterChange: (id: string) => void;
+  selectedProjectIds: string[];
+  onProjectFilterChange: (ids: string[]) => void;
   collapseLunch: boolean;
   onToggleCollapseLunch: () => void;
   collapseOvertime: boolean;
@@ -46,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onZoomChange,
   viewMode,
   onViewModeChange,
-  selectedProjectFilter,
+  selectedProjectIds,
   onProjectFilterChange,
   collapseLunch,
   onToggleCollapseLunch,
@@ -69,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
   days.forEach((day) => {
     day.tasks.forEach((task) => {
       // If filtering by project, only count matched tasks
-      if (selectedProjectFilter === 'all' || task.projectId === selectedProjectFilter) {
+      if (selectedProjectIds.includes(task.projectId)) {
         totalTasks += 1;
         const { normalHours, overtimeHours, lunchBreakHours } = calculateTaskHours(task.startHour, task.duration);
         totalNormalHours += normalHours;
@@ -145,24 +146,13 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
-            {/* Project Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-800 rounded-lg px-2.5 py-1 border border-slate-700 text-xs">
-              <Filter className="w-3.5 h-3.5 text-slate-400" />
-              <select
-                value={selectedProjectFilter}
-                onChange={(e) => onProjectFilterChange(e.target.value)}
-                className="bg-transparent text-slate-200 focus:outline-none text-xs cursor-pointer"
-              >
-                <option value="all" className="bg-slate-900 text-white">
-                  全部專案 ({projects.length})
-                </option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-slate-900 text-white">
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Project Multi-Select Filter */}
+            <ProjectMultiSelectFilter
+              projects={projects}
+              selectedProjectIds={selectedProjectIds}
+              days={days}
+              onChange={onProjectFilterChange}
+            />
 
             {/* Zoom selector */}
             <div className="flex items-center bg-slate-800 rounded-lg p-1 border border-slate-700 text-xs font-medium">

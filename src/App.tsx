@@ -13,7 +13,7 @@ import { ProjectModal } from './components/ProjectModal';
 import { HelpModal } from './components/HelpModal';
 import { ProjectImportModal } from './components/ProjectImportModal';
 import { exportSingleProject, exportAllProjects, ParsedImportResult } from './utils/projectTransfer';
-import { Plus, FolderPlus, Layers, CalendarRange, Coffee, Moon, CheckCircle2, AlertTriangle, Download, X } from 'lucide-react';
+import { Plus, FolderPlus, Layers, CalendarRange, Coffee, Moon, CheckCircle2, AlertTriangle, Download, X, Filter } from 'lucide-react';
 
 const DAYS_STORAGE_KEY = 'gantt_chart_scheduler_days_v3';
 const PROJECTS_STORAGE_KEY = 'gantt_chart_scheduler_projects_v3';
@@ -61,7 +61,9 @@ export default function App() {
 
   const [zoom, setZoom] = useState<ZoomLevel>('normal');
   const [viewMode, setViewMode] = useState<ViewGroupingMode>('continuous');
-  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>('all');
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>(() => {
+    return projects.map((p) => p.id);
+  });
   const [helpModalOpen, setHelpModalOpen] = useState<boolean>(false);
   const [projectModalOpen, setProjectModalOpen] = useState<boolean>(false);
   const [importModalOpen, setImportModalOpen] = useState<boolean>(false);
@@ -145,11 +147,8 @@ export default function App() {
   const sidebarWidth = 230;
   const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
 
-  // Filtered projects based on header filter
-  const visibleProjects =
-    selectedProjectFilter === 'all'
-      ? projects
-      : projects.filter((p) => p.id === selectedProjectFilter);
+  // Filtered projects based on header multi-select filter
+  const visibleProjects = projects.filter((p) => selectedProjectIds.includes(p.id));
 
   // Day handlers
   const handleAddDay = () => {
@@ -249,6 +248,7 @@ export default function App() {
       id: `proj-${Date.now()}`,
     };
     setProjects((prev) => [...prev, newProject]);
+    setSelectedProjectIds((prev) => [...prev, newProject.id]);
   };
 
   const handleUpdateProject = (projectId: string, updates: Partial<Project>) => {
@@ -267,9 +267,7 @@ export default function App() {
         tasks: day.tasks.filter((t) => t.projectId !== projectId),
       }))
     );
-    if (selectedProjectFilter === projectId) {
-      setSelectedProjectFilter('all');
-    }
+    setSelectedProjectIds((prev) => prev.filter((id) => id !== projectId));
   };
 
   // One-click duplicate project with its items
@@ -315,6 +313,7 @@ export default function App() {
 
     setProjects((prev) => [...prev, duplicatedProject]);
     setDays(newDays);
+    setSelectedProjectIds((prev) => [...prev, newProjectId]);
 
     showToast(`已一鍵複製專案「${newProjectName}」，內含 ${clonedCount} 個工作項目！`, 'success');
   };
@@ -385,6 +384,7 @@ export default function App() {
 
     setProjects((prev) => [...prev, importedProject]);
     setDays(updatedDays);
+    setSelectedProjectIds((prev) => [...prev, newProjectId]);
 
     showToast(`成功匯入專案「${importedProject.name}」，共 ${importedTaskCount} 個排程項目！`, 'success');
   };
@@ -397,6 +397,7 @@ export default function App() {
     if (overwrite) {
       setProjects(data.projects);
       setDays(data.days);
+      setSelectedProjectIds(data.projects.map((p) => p.id));
       showToast(`已完整還原備份，共 ${data.projects.length} 個專案與 ${data.totalTasksCount} 個項目！`, 'success');
     } else {
       const projectIdMap: Record<string, string> = {};
@@ -456,6 +457,7 @@ export default function App() {
 
       setProjects((prev) => [...prev, ...newProjectsToAdd]);
       setDays(updatedDays);
+      setSelectedProjectIds((prev) => [...prev, ...newProjectsToAdd.map((p) => p.id)]);
 
       showToast(`合併匯入完成！新增 ${newProjectsToAdd.length} 個專案與 ${importedTaskCount} 個工作項目！`, 'success');
     }
@@ -468,7 +470,7 @@ export default function App() {
     defaultProjectId?: string
   ) => {
     const targetDay = dayId || days[0]?.id || '';
-    const targetProj = defaultProjectId || (selectedProjectFilter !== 'all' ? selectedProjectFilter : projects[0]?.id || '');
+    const targetProj = defaultProjectId || (selectedProjectIds.length === 1 ? selectedProjectIds[0] : projects[0]?.id || '');
 
     setTaskModalState({
       isOpen: true,
@@ -554,7 +556,7 @@ export default function App() {
     if (window.confirm('確定要重設為初始專案範例資料嗎？此操作將覆蓋目前的編輯內容。')) {
       setProjects(DEFAULT_PROJECTS);
       setDays(DEFAULT_DAYS);
-      setSelectedProjectFilter('all');
+      setSelectedProjectIds(DEFAULT_PROJECTS.map((p) => p.id));
     }
   };
 
@@ -568,8 +570,8 @@ export default function App() {
         onZoomChange={setZoom}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        selectedProjectFilter={selectedProjectFilter}
-        onProjectFilterChange={setSelectedProjectFilter}
+        selectedProjectIds={selectedProjectIds}
+        onProjectFilterChange={setSelectedProjectIds}
         collapseLunch={collapseLunch}
         onToggleCollapseLunch={() => setCollapseLunch((prev) => !prev)}
         collapseOvertime={collapseOvertime}
@@ -619,24 +621,43 @@ export default function App() {
 
                   {/* Project Rows across all days */}
                   <div className="divide-y divide-slate-800">
-                    {visibleProjects.map((project) => (
-                      <ContinuousProjectRow
-                        key={project.id}
-                        project={project}
-                        days={days}
-                        hourWidth={hourWidth}
-                        sidebarWidth={sidebarWidth}
-                        collapseLunch={collapseLunch}
-                        collapseOvertime={collapseOvertime}
-                        onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
-                        onUpdateTask={handleUpdateTask}
-                        onDeleteTask={handleDeleteTask}
-                        onOpenEditModal={handleOpenEditModal}
-                        onMoveTaskAcrossDays={handleMoveTaskAcrossDays}
-                        onDuplicateProject={handleDuplicateProject}
-                        onExportProject={handleExportProject}
-                      />
-                    ))}
+                    {visibleProjects.length === 0 ? (
+                      <div className="py-16 px-6 text-center flex flex-col items-center justify-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400">
+                          <Filter className="w-6 h-6 text-indigo-400" />
+                        </div>
+                        <div className="text-slate-200 font-semibold text-sm">目前未勾選任何顯示專案</div>
+                        <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
+                          您已取消勾選所有專案。請點擊上方工具列「專案篩選」勾選欲檢視的專案，或直接點擊下方按鈕恢復顯示所有專案。
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedProjectIds(projects.map((p) => p.id))}
+                          className="mt-1 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition active:scale-95 shadow-md shadow-indigo-600/20"
+                        >
+                          顯示所有專案 ({projects.length})
+                        </button>
+                      </div>
+                    ) : (
+                      visibleProjects.map((project) => (
+                        <ContinuousProjectRow
+                          key={project.id}
+                          project={project}
+                          days={days}
+                          hourWidth={hourWidth}
+                          sidebarWidth={sidebarWidth}
+                          collapseLunch={collapseLunch}
+                          collapseOvertime={collapseOvertime}
+                          onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
+                          onUpdateTask={handleUpdateTask}
+                          onDeleteTask={handleDeleteTask}
+                          onOpenEditModal={handleOpenEditModal}
+                          onMoveTaskAcrossDays={handleMoveTaskAcrossDays}
+                          onDuplicateProject={handleDuplicateProject}
+                          onExportProject={handleExportProject}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
               ) : (
@@ -679,25 +700,44 @@ export default function App() {
                   ) : (
                     /* Group by Project: Under each Project, separate rows for each Day */
                     <div className="divide-y divide-slate-800">
-                      {visibleProjects.map((project) => (
-                        <ProjectViewRow
-                          key={project.id}
-                          project={project}
-                          days={days}
-                          hourWidth={hourWidth}
-                          sidebarWidth={sidebarWidth}
-                          collapseLunch={collapseLunch}
-                          collapseOvertime={collapseOvertime}
-                          onUpdateProject={handleUpdateProject}
-                          onDeleteProject={handleDeleteProject}
-                          onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
-                          onUpdateTask={handleUpdateTask}
-                          onDeleteTask={handleDeleteTask}
-                          onOpenEditModal={handleOpenEditModal}
-                          onDuplicateProject={handleDuplicateProject}
-                          onExportProject={handleExportProject}
-                        />
-                      ))}
+                      {visibleProjects.length === 0 ? (
+                        <div className="py-16 px-6 text-center flex flex-col items-center justify-center gap-3">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400">
+                            <Filter className="w-6 h-6 text-indigo-400" />
+                          </div>
+                          <div className="text-slate-200 font-semibold text-sm">目前未勾選任何顯示專案</div>
+                          <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
+                            您已取消勾選所有專案。請點擊上方工具列「專案篩選」勾選欲檢視的專案，或直接點擊下方按鈕恢復顯示所有專案。
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedProjectIds(projects.map((p) => p.id))}
+                            className="mt-1 px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition active:scale-95 shadow-md shadow-indigo-600/20"
+                          >
+                            顯示所有專案 ({projects.length})
+                          </button>
+                        </div>
+                      ) : (
+                        visibleProjects.map((project) => (
+                          <ProjectViewRow
+                            key={project.id}
+                            project={project}
+                            days={days}
+                            hourWidth={hourWidth}
+                            sidebarWidth={sidebarWidth}
+                            collapseLunch={collapseLunch}
+                            collapseOvertime={collapseOvertime}
+                            onUpdateProject={handleUpdateProject}
+                            onDeleteProject={handleDeleteProject}
+                            onAddTaskToDay={(dId, startH, pId) => handleAddTask(dId, startH, pId)}
+                            onUpdateTask={handleUpdateTask}
+                            onDeleteTask={handleDeleteTask}
+                            onOpenEditModal={handleOpenEditModal}
+                            onDuplicateProject={handleDuplicateProject}
+                            onExportProject={handleExportProject}
+                          />
+                        ))
+                      )}
                     </div>
                   )}
                 </div>

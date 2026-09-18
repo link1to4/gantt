@@ -55,10 +55,11 @@ export const DayRow: React.FC<DayRowProps> = ({
   const TASK_ROW_HEIGHT = 44;
   const dayWidth = getDayWidth(hourWidth, collapseLunch, collapseOvertime);
 
-  // Calculate day-wide statistics
+  // Calculate day-wide statistics for visible projects
   let dayNormalHours = 0;
   let dayOvertimeHours = 0;
-  day.tasks.forEach((t) => {
+  const visibleDayTasks = day.tasks.filter((t) => projects.some((p) => p.id === t.projectId));
+  visibleDayTasks.forEach((t) => {
     const { normalHours, overtimeHours } = calculateTaskHours(t.startHour, t.duration);
     dayNormalHours += normalHours;
     dayOvertimeHours += overtimeHours;
@@ -132,7 +133,7 @@ export const DayRow: React.FC<DayRowProps> = ({
           {/* Aggregate Badge for this Day */}
           <div className="flex items-center gap-2 text-xs text-slate-400">
             <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700/60 font-mono text-[11px]">
-              {day.tasks.length} 個項目
+              {visibleDayTasks.length} 個項目
             </span>
             <span className="text-sky-400 font-mono text-[11px]">
               常 {dayNormalHours}h
@@ -178,7 +179,12 @@ export const DayRow: React.FC<DayRowProps> = ({
       {/* Project Rows List under this Day */}
       {!isCollapsed && (
         <div className="divide-y divide-slate-800/60">
-          {projects.map((project) => {
+          {projects.length === 0 ? (
+            <div className="py-6 px-4 text-center text-xs text-slate-500">
+              未選取任何欲顯示的專案（請在上方專案篩選中勾選）
+            </div>
+          ) : (
+            projects.map((project) => {
             // Filter tasks belonging to this project on this day
             const projTasks = day.tasks.filter((t) => t.projectId === project.id);
             const { positionedTasks, maxTrack } = assignTracksToTasks(projTasks);
@@ -392,7 +398,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                 </div>
               </div>
             );
-          })}
+          }))}
         </div>
       )}
     </div>
