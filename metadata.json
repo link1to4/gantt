@@ -1,0 +1,6 @@
+{
+  "name": "甘特圖排程系統",
+  "description": "具備專案與項目分層、8:00-18:00 正常工時與 18:00-22:00 加班時段的多日甘特圖，支援不同專案分列呈現、方塊拖曳與時間區間調整。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
