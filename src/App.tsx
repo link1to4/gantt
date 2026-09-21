@@ -562,7 +562,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
       {/* Top Navigation & Controls Header */}
       <Header
         days={days}
@@ -591,7 +591,7 @@ export default function App() {
       {/* Main Gantt Canvas Area */}
       <main className="flex-1 p-3 sm:p-6 max-w-[1700px] w-full mx-auto flex flex-col">
         {/* Gantt Container Card */}
-        <div className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl flex flex-col overflow-hidden">
+        <div className="flex-1 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col overflow-hidden">
           {/* Timeline scroll container */}
           <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[420px]">
             <div
@@ -621,14 +621,14 @@ export default function App() {
                   />
 
                   {/* Project Rows across all days */}
-                  <div className="divide-y divide-slate-800">
+                  <div className="divide-y divide-slate-200">
                     {visibleProjects.length === 0 ? (
                       <div className="py-16 px-6 text-center flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400">
-                          <Filter className="w-6 h-6 text-indigo-400" />
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
+                          <Filter className="w-6 h-6 text-indigo-500" />
                         </div>
-                        <div className="text-slate-200 font-semibold text-sm">目前未勾選任何顯示專案</div>
-                        <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
+                        <div className="text-slate-800 font-semibold text-sm">目前未勾選任何顯示專案</div>
+                        <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
                           您已取消勾選所有專案。請點擊上方工具列「專案篩選」勾選欲檢視的專案，或直接點擊下方按鈕恢復顯示所有專案。
                         </p>
                         <button
@@ -676,7 +676,7 @@ export default function App() {
 
                   {viewMode === 'by-day' ? (
                     /* Group by Day: Under each Day, separate rows for each Project */
-                    <div className="divide-y divide-slate-800">
+                    <div className="divide-y divide-slate-200">
                       {days.map((day, idx) => (
                         <DayRow
                           key={day.id}
@@ -700,14 +700,14 @@ export default function App() {
                     </div>
                   ) : (
                     /* Group by Project: Under each Project, separate rows for each Day */
-                    <div className="divide-y divide-slate-800">
+                    <div className="divide-y divide-slate-200">
                       {visibleProjects.length === 0 ? (
                         <div className="py-16 px-6 text-center flex flex-col items-center justify-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400">
-                            <Filter className="w-6 h-6 text-indigo-400" />
+                          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500">
+                            <Filter className="w-6 h-6 text-indigo-500" />
                           </div>
-                          <div className="text-slate-200 font-semibold text-sm">目前未勾選任何顯示專案</div>
-                          <p className="text-slate-400 text-xs max-w-sm leading-relaxed">
+                          <div className="text-slate-800 font-semibold text-sm">目前未勾選任何顯示專案</div>
+                          <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
                             您已取消勾選所有專案。請點擊上方工具列「專案篩選」勾選欲檢視的專案，或直接點擊下方按鈕恢復顯示所有專案。
                           </p>
                           <button
@@ -747,9 +747,9 @@ export default function App() {
           </div>
 
           {/* Quick Bottom Bar */}
-          <div className="px-4 sm:px-6 py-3 bg-slate-900/95 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="px-4 sm:px-6 py-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-              <span className="flex items-center gap-1.5 font-medium text-slate-300">
+              <span className="flex items-center gap-1.5 font-medium text-slate-700">
                 <span className="w-2.5 h-2.5 rounded-sm bg-sky-500"></span>
                 <span>正常工時 (08:30 - 17:30，共 8h)</span>
               </span>
@@ -758,14 +758,14 @@ export default function App() {
                 onClick={() => setCollapseLunch((prev) => !prev)}
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition ${
                   collapseLunch 
-                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/50' 
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-amber-100 text-amber-900 border-amber-300 font-semibold' 
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                 }`}
                 title="點擊切換午休時段收折"
               >
-                <Coffee className="w-3 h-3 text-amber-400" />
+                <Coffee className="w-3 h-3 text-amber-600" />
                 <span>午休 (12:00 - 13:00 不計工時)</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-slate-900 text-amber-400">
+                <span className="text-[10px] font-mono px-1 rounded bg-amber-200/80 text-amber-900">
                   {collapseLunch ? '已收折' : '點擊收折'}
                 </span>
               </button>
@@ -774,14 +774,14 @@ export default function App() {
                 onClick={() => setCollapseOvertime((prev) => !prev)}
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded border transition ${
                   collapseOvertime 
-                    ? 'bg-amber-950/40 text-amber-300 border-amber-500/50' 
-                    : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                    ? 'bg-amber-100 text-amber-900 border-amber-300 font-semibold' 
+                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                 }`}
                 title="點擊切換加班時段收折"
               >
-                <Moon className="w-3 h-3 text-amber-400" />
+                <Moon className="w-3 h-3 text-amber-600" />
                 <span>加班 (17:30 - 22:00)</span>
-                <span className="text-[10px] font-mono px-1 rounded bg-slate-900 text-amber-400">
+                <span className="text-[10px] font-mono px-1 rounded bg-amber-200/80 text-amber-900">
                   {collapseOvertime ? '已收折' : '點擊收折'}
                 </span>
               </button>
@@ -790,7 +790,7 @@ export default function App() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setProjectModalOpen(true)}
-                className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline flex items-center gap-1"
               >
                 <FolderPlus className="w-3.5 h-3.5" />
                 <span>管理專案維度</span>
@@ -798,7 +798,7 @@ export default function App() {
 
               <button
                 onClick={handleAddDay}
-                className="text-xs font-semibold text-sky-400 hover:text-sky-300 hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>增加下一天 (Day {days.length + 1})</span>
@@ -861,21 +861,21 @@ export default function App() {
       {toast && (
         <div className="fixed bottom-14 right-6 z-50 animate-in fade-in slide-in-from-bottom-3 duration-200">
           <div
-            className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs sm:text-sm font-medium ${
+            className={`px-4 py-3 rounded-xl shadow-xl border flex items-center gap-2.5 text-xs sm:text-sm font-medium ${
               toast.type === 'success'
-                ? 'bg-emerald-950/95 text-emerald-200 border-emerald-500/50 shadow-emerald-950/60'
+                ? 'bg-emerald-50 text-emerald-900 border-emerald-300 shadow-emerald-900/10'
                 : toast.type === 'error'
-                ? 'bg-rose-950/95 text-rose-200 border-rose-500/50 shadow-rose-950/60'
-                : 'bg-indigo-950/95 text-indigo-200 border-indigo-500/50 shadow-indigo-950/60'
+                ? 'bg-rose-50 text-rose-900 border-rose-300 shadow-rose-900/10'
+                : 'bg-indigo-50 text-indigo-900 border-indigo-300 shadow-indigo-900/10'
             }`}
           >
-            {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
-            {toast.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />}
-            {toast.type === 'info' && <Download className="w-4 h-4 text-indigo-400 shrink-0" />}
+            {toast.type === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
+            {toast.type === 'error' && <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />}
+            {toast.type === 'info' && <Download className="w-4 h-4 text-indigo-600 shrink-0" />}
             <span>{toast.message}</span>
             <button
               onClick={() => setToast(null)}
-              className="ml-2 p-0.5 rounded text-slate-400 hover:text-white transition"
+              className="ml-2 p-0.5 rounded text-slate-500 hover:text-slate-800 transition"
             >
               <X className="w-3.5 h-3.5" />
             </button>

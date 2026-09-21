@@ -76,13 +76,13 @@ export const DayRow: React.FC<DayRowProps> = ({
   };
 
   return (
-    <div className="border-b-2 border-slate-800 bg-slate-950/20">
+    <div className="border-b border-slate-200 bg-white">
       {/* Day Section Header Bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800/80 sticky left-0 z-20 shadow-xs">
+      <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-b border-slate-200 sticky left-0 z-20 shadow-xs">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-slate-400 hover:text-white transition p-0.5 rounded hover:bg-slate-800"
+            className="text-slate-400 hover:text-slate-700 transition p-0.5 rounded hover:bg-slate-200/60"
             title={isCollapsed ? '展開此日專案列' : '收合此日專案列'}
           >
             {isCollapsed ? (
@@ -106,7 +106,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                   }
                 }}
                 autoFocus
-                className="bg-slate-800 border border-indigo-500 rounded px-2.5 py-0.5 text-xs text-white focus:outline-none"
+                className="bg-white border border-indigo-500 rounded px-2.5 py-0.5 text-xs text-slate-800 focus:outline-none"
               />
               <button
                 onClick={handleSaveLabel}
@@ -117,13 +117,13 @@ export const DayRow: React.FC<DayRowProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-100 text-sm tracking-tight flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-indigo-400"></span>
+              <span className="font-bold text-slate-800 text-sm tracking-tight flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
                 {day.label}
               </span>
               <button
                 onClick={() => setIsEditingLabel(true)}
-                className="text-slate-500 hover:text-slate-300 p-0.5 rounded transition"
+                className="text-slate-400 hover:text-slate-600 p-0.5 rounded transition"
                 title="修改名稱"
               >
                 <Edit2 className="w-3 h-3" />
@@ -132,15 +132,15 @@ export const DayRow: React.FC<DayRowProps> = ({
           )}
 
           {/* Aggregate Badge for this Day */}
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded border border-slate-700/60 font-mono text-[11px]">
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span className="px-2 py-0.5 bg-white text-slate-700 rounded border border-slate-200 font-mono text-[11px] shadow-xs">
               {visibleDayTasks.length} 個項目
             </span>
-            <span className="text-sky-400 font-mono text-[11px]">
+            <span className="text-sky-700 font-mono text-[11px] bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
               常 {dayNormalHours}h
             </span>
             {dayOvertimeHours > 0 && (
-              <span className="text-amber-400 font-bold font-mono text-[11px]">
+              <span className="text-amber-700 font-bold font-mono text-[11px] bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
                 加 {dayOvertimeHours}h
               </span>
             )}
@@ -151,7 +151,7 @@ export const DayRow: React.FC<DayRowProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onAddTaskToDay(day.id)}
-            className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 px-2.5 py-1 rounded transition flex items-center gap-1"
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-2.5 py-1 rounded transition flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>新增項目</span>
@@ -168,7 +168,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                   onDeleteDay(day.id);
                 }
               }}
-              className="text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 p-1.5 rounded transition"
+              className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-1.5 rounded transition"
               title={`刪除 ${day.label}`}
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -179,9 +179,9 @@ export const DayRow: React.FC<DayRowProps> = ({
 
       {/* Project Rows List under this Day */}
       {!isCollapsed && (
-        <div className="divide-y divide-slate-800/60">
+        <div className="divide-y divide-slate-200">
           {projects.length === 0 ? (
-            <div className="py-6 px-4 text-center text-xs text-slate-500">
+            <div className="py-6 px-4 text-center text-xs text-slate-400">
               未選取任何欲顯示的專案（請在上方專案篩選中勾選）
             </div>
           ) : (
@@ -227,12 +227,12 @@ export const DayRow: React.FC<DayRowProps> = ({
             return (
               <div
                 key={project.id}
-                className="flex hover:bg-slate-900/40 transition-colors group/projrow relative"
+                className="flex hover:bg-slate-50/70 transition-colors group/projrow relative"
               >
                 {/* Left Sidebar: Project Info */}
                 <div
                   style={{ width: sidebarWidth }}
-                  className="flex-shrink-0 bg-slate-900/95 border-r border-slate-800 p-3 flex flex-col justify-between z-10 shadow-xs"
+                  className="flex-shrink-0 bg-white border-r border-slate-200 p-3 flex flex-col justify-between z-10 shadow-xs"
                 >
                   <div>
                     <div className="flex items-center gap-2">
@@ -240,24 +240,24 @@ export const DayRow: React.FC<DayRowProps> = ({
                         className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${colorMeta.bg}`}
                       />
                       <span
-                        className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
+                        className="font-bold text-xs sm:text-sm text-slate-900 truncate tracking-tight"
                         title={project.name}
                       >
                         {project.name}
                       </span>
                     </div>
 
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
-                      <span className="bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700/60 font-mono">
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-500">
+                      <span className="bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded border border-slate-200 font-mono">
                         {projTasks.length} 項
                       </span>
                       {projNormal > 0 && (
-                        <span className="text-sky-400 font-mono">
+                        <span className="text-sky-700 font-mono">
                           常{projNormal}h
                         </span>
                       )}
                       {projOvertime > 0 && (
-                        <span className="text-amber-400 font-bold font-mono">
+                        <span className="text-amber-700 font-bold font-mono">
                           加{projOvertime}h
                         </span>
                       )}
@@ -265,16 +265,16 @@ export const DayRow: React.FC<DayRowProps> = ({
                   </div>
 
                   {/* Add task specifically to this project */}
-                  <div className="mt-2 pt-1 border-t border-slate-800/60 flex items-center justify-between">
+                  <div className="mt-2 pt-1 border-t border-slate-100 flex items-center justify-between">
                     <button
                       onClick={() => onAddTaskToDay(day.id, 9, project.id)}
-                      className="text-[11px] font-medium text-slate-400 hover:text-indigo-300 hover:bg-indigo-950/30 px-1.5 py-0.5 rounded transition flex items-center gap-1"
+                      className="text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition flex items-center gap-1"
                       title={`新增項目至 ${project.name}`}
                     >
-                      <Plus className="w-3 h-3 text-indigo-400" />
+                      <Plus className="w-3 h-3 text-indigo-600" />
                       <span>新增項目</span>
                     </button>
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[10px] text-slate-400 font-mono">
                       點格新增
                     </span>
                   </div>
@@ -287,7 +287,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                     height: `${rowHeightPx}px`,
                   }}
                   onClick={handleRowGridClick}
-                  className="relative flex-shrink-0 cursor-pointer overflow-hidden select-none"
+                  className="relative flex-shrink-0 cursor-pointer overflow-hidden select-none bg-white"
                   title={`點擊此列任意時間格，即可直接新增項目至「${project.name}」`}
                 >
                   {/* Hourly vertical background gridlines */}
@@ -299,12 +299,12 @@ export const DayRow: React.FC<DayRowProps> = ({
                         style={{ width: slot.span * hourWidth }}
                         className={`flex-shrink-0 h-full border-r ${
                           slot.hour === 8.5
-                            ? 'border-sky-500/50 bg-sky-950/10'
-                            : 'border-slate-800/60 bg-slate-950/30'
-                        } relative group-hover/projrow:bg-slate-900/30`}
+                            ? 'border-sky-200 bg-sky-50/30'
+                            : 'border-slate-200/80 bg-white'
+                        } relative group-hover/projrow:bg-slate-50/40`}
                       >
                         {slot.hasMidTick && (
-                          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
                         )}
                       </div>
                     ))}
@@ -313,22 +313,22 @@ export const DayRow: React.FC<DayRowProps> = ({
                     {collapseLunch ? (
                       <div
                         style={{ width: COLLAPSED_LUNCH_WIDTH }}
-                        className="flex-shrink-0 h-full border-r border-slate-700/60 bg-amber-950/20 group-hover/projrow:bg-amber-950/30 relative flex items-center justify-center overflow-hidden"
+                        className="flex-shrink-0 h-full border-r border-amber-200 bg-amber-50/70 group-hover/projrow:bg-amber-100/50 relative flex items-center justify-center overflow-hidden"
                         title="午休時段已收折 (12:00~13:00)"
                       >
-                        <div className="text-[10px] text-amber-400/40 font-mono select-none">☕</div>
+                        <div className="text-[10px] text-amber-600/60 font-mono select-none">☕</div>
                       </div>
                     ) : (
                       <div
                         style={{ width: hourWidth }}
-                        className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-800/35 group-hover/projrow:bg-slate-800/50 flex items-center justify-center"
+                        className="flex-shrink-0 h-full border-r border-amber-200/80 relative bg-amber-50/40 group-hover/projrow:bg-amber-50/70 flex items-center justify-center"
                       >
-                        <div className="absolute inset-0 flex items-center justify-center opacity-30 select-none pointer-events-none">
-                          <span className="text-[10px] text-amber-300/80 font-mono tracking-wider rotate-90 sm:rotate-0">
+                        <div className="absolute inset-0 flex items-center justify-center opacity-40 select-none pointer-events-none">
+                          <span className="text-[10px] text-amber-700 font-mono tracking-wider rotate-90 sm:rotate-0">
                             ☕午休不計
                           </span>
                         </div>
-                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200 pointer-events-none" />
                       </div>
                     )}
 
@@ -337,13 +337,13 @@ export const DayRow: React.FC<DayRowProps> = ({
                       <div
                         key={hour}
                         style={{ width: hour === 17 && collapseOvertime ? hourWidth * 0.5 : hourWidth }}
-                        className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
+                        className="flex-shrink-0 h-full border-r border-slate-200/80 relative bg-white group-hover/projrow:bg-slate-50/40"
                       >
-                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                        <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
                         {hour === 17 && !collapseOvertime && (
                           <>
-                            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500/80 z-10 pointer-events-none" />
-                            <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-950/15 pointer-events-none" />
+                            <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500 z-10 pointer-events-none" />
+                            <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-50/40 pointer-events-none" />
                           </>
                         )}
                       </div>
@@ -355,9 +355,9 @@ export const DayRow: React.FC<DayRowProps> = ({
                         <div
                           key={hour}
                           style={{ width: hourWidth }}
-                          className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-amber-950/10 group-hover/projrow:bg-amber-950/20"
+                          className="flex-shrink-0 h-full border-r border-amber-200/60 relative bg-amber-50/30 group-hover/projrow:bg-amber-50/50"
                         >
-                          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                          <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200/60 pointer-events-none" />
                         </div>
                       ))
                     )}
@@ -387,7 +387,7 @@ export const DayRow: React.FC<DayRowProps> = ({
 
                   {/* Empty state hint */}
                   {projTasks.length === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-500 text-xs gap-1.5 opacity-60">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-slate-400 text-xs gap-1.5 opacity-60">
                       <span>點擊時間格新增項目至「{project.name}」</span>
                     </div>
                   )}

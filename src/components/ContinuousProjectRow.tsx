@@ -116,16 +116,16 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
   };
 
   return (
-    <div className="flex hover:bg-slate-900/40 transition-colors group/projrow relative border-b border-slate-800">
+    <div className="flex hover:bg-slate-50/70 transition-colors group/projrow relative border-b border-slate-200">
       {/* Left Sticky Sidebar: Project Information */}
       <div
         style={{ width: sidebarWidth }}
-        className="sticky left-0 bg-slate-900/98 border-r border-slate-800 p-3 flex flex-col justify-between z-20 shadow-md backdrop-blur-xs flex-shrink-0"
+        className="sticky left-0 bg-white/98 border-r border-slate-200 p-3 flex flex-col justify-between z-20 shadow-xs backdrop-blur-xs flex-shrink-0"
       >
         <div className="flex items-center gap-2 min-w-0">
           <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorMeta.bg}`} />
           <span
-            className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
+            className="font-bold text-xs sm:text-sm text-slate-900 truncate tracking-tight"
             title={project.name}
           >
             {project.name}
@@ -133,13 +133,13 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
         </div>
 
         {/* Add item button */}
-        <div className="mt-2 pt-1 border-t border-slate-800/60 flex items-center">
+        <div className="mt-2 pt-1 border-t border-slate-100 flex items-center">
           <button
             onClick={() => onAddTaskToDay(days[0]?.id || '', 9, project.id)}
-            className="text-[11px] font-medium text-slate-400 hover:text-indigo-300 hover:bg-indigo-950/30 px-1.5 py-0.5 rounded transition flex items-center gap-1"
+            className="text-[11px] font-medium text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 px-1.5 py-0.5 rounded transition flex items-center gap-1"
             title={`新增項目至 ${project.name}`}
           >
-            <Plus className="w-3 h-3 text-indigo-400" />
+            <Plus className="w-3 h-3 text-indigo-600" />
             <span>新增項目</span>
           </button>
         </div>
@@ -152,7 +152,7 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
           height: `${rowHeightPx}px`,
         }}
         onClick={handleGridClick}
-        className="relative flex-shrink-0 cursor-pointer overflow-hidden select-none"
+        className="relative flex-shrink-0 cursor-pointer overflow-hidden select-none bg-white"
         title={`點擊此列任意時間格，即可直接新增項目至「${project.name}」`}
       >
         {/* Background day slices and vertical gridlines */}
@@ -161,7 +161,7 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
             <div
               key={day.id}
               style={{ width: dayWidth }}
-              className="flex-shrink-0 h-full flex relative border-r-2 border-indigo-500/50"
+              className="flex-shrink-0 h-full flex relative border-r-2 border-indigo-300"
             >
               {/* Morning Hours: 08:30 (0.5h), 09:00 (1h), 10:00 (1h), 11:00 (1h) */}
               {MORNING_SLOTS.map((slot) => (
@@ -170,12 +170,12 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
                   style={{ width: slot.span * hourWidth }}
                   className={`flex-shrink-0 h-full border-r ${
                     slot.hour === 8.5
-                      ? 'border-sky-500/50 bg-sky-950/10'
-                      : 'border-slate-800/60 bg-slate-950/30'
-                  } relative group-hover/projrow:bg-slate-900/30`}
+                      ? 'border-sky-200 bg-sky-50/30'
+                      : 'border-slate-200/80 bg-white'
+                  } relative group-hover/projrow:bg-slate-50/40`}
                 >
                   {slot.hasMidTick && (
-                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
                   )}
                 </div>
               ))}
@@ -184,22 +184,22 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
               {collapseLunch ? (
                 <div
                   style={{ width: COLLAPSED_LUNCH_WIDTH }}
-                  className="flex-shrink-0 h-full border-r border-slate-700/60 bg-amber-950/20 group-hover/projrow:bg-amber-950/30 relative flex items-center justify-center overflow-hidden"
+                  className="flex-shrink-0 h-full border-r border-amber-200 bg-amber-50/70 group-hover/projrow:bg-amber-100/50 relative flex items-center justify-center overflow-hidden"
                   title="午休時段已收折 (12:00~13:00)"
                 >
-                  <div className="text-[10px] text-amber-400/40 font-mono select-none">☕</div>
+                  <div className="text-[10px] text-amber-600/60 font-mono select-none">☕</div>
                 </div>
               ) : (
                 <div
                   style={{ width: hourWidth }}
-                  className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-800/35 group-hover/projrow:bg-slate-800/50 flex items-center justify-center"
+                  className="flex-shrink-0 h-full border-r border-amber-200/80 relative bg-amber-50/40 group-hover/projrow:bg-amber-50/70 flex items-center justify-center"
                 >
-                  <div className="absolute inset-0 flex items-center justify-center opacity-30 select-none pointer-events-none">
-                    <span className="text-[10px] text-amber-300/80 font-mono tracking-wider rotate-90 sm:rotate-0">
+                  <div className="absolute inset-0 flex items-center justify-center opacity-40 select-none pointer-events-none">
+                    <span className="text-[10px] text-amber-700 font-mono tracking-wider rotate-90 sm:rotate-0">
                       ☕午休不計
                     </span>
                   </div>
-                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200 pointer-events-none" />
                 </div>
               )}
 
@@ -208,13 +208,13 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
                 <div
                   key={hour}
                   style={{ width: hour === 17 && collapseOvertime ? hourWidth * 0.5 : hourWidth }}
-                  className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-slate-950/30 group-hover/projrow:bg-slate-900/30"
+                  className="flex-shrink-0 h-full border-r border-slate-200/80 relative bg-white group-hover/projrow:bg-slate-50/40"
                 >
-                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
                   {hour === 17 && !collapseOvertime && (
                     <>
-                      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500/80 z-10 pointer-events-none" />
-                      <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-950/15 pointer-events-none" />
+                      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500 z-10 pointer-events-none" />
+                      <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-50/40 pointer-events-none" />
                     </>
                   )}
                 </div>
@@ -226,9 +226,9 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
                   <div
                     key={hour}
                     style={{ width: hourWidth }}
-                    className="flex-shrink-0 h-full border-r border-slate-800/60 relative bg-amber-950/10 group-hover/projrow:bg-amber-950/20"
+                    className="flex-shrink-0 h-full border-r border-amber-200/60 relative bg-amber-50/30 group-hover/projrow:bg-amber-50/50"
                   >
-                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-800/40 pointer-events-none" />
+                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200/60 pointer-events-none" />
                   </div>
                 ))
               )}
