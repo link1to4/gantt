@@ -9,20 +9,39 @@ export const OVERTIME_HOUR = 17.5;    // 17:30 起為加班時段 (別名)
 export const END_HOUR = 22;           // 22:00 甘特圖當日結束
 export const TOTAL_HOURS = END_HOUR - START_HOUR; // 13.5 hours (08:30 - 22:00)
 
-export interface MorningSlot {
+export interface TimelineSlot {
   hour: number;
   label: string;
   endLabel?: string;
   span: number; // in hours (0.5h or 1.0h)
   sub: string;
   hasMidTick?: boolean;
+  isOvertime?: boolean;
 }
 
-export const MORNING_SLOTS: MorningSlot[] = [
-  { hour: 8.5, label: '08:30', endLabel: '09:00', span: 0.5, sub: '0.5h', hasMidTick: false },
+export type MorningSlot = TimelineSlot;
+
+export const MORNING_SLOTS: TimelineSlot[] = [
+  { hour: 8.5, label: '08:30', endLabel: '09:00', span: 0.5, sub: '+0.5h', hasMidTick: false },
   { hour: 9, label: '09:00', endLabel: '10:00', span: 1.0, sub: '+1h', hasMidTick: true },
   { hour: 10, label: '10:00', endLabel: '11:00', span: 1.0, sub: '+1h', hasMidTick: true },
   { hour: 11, label: '11:00', endLabel: '12:00', span: 1.0, sub: '+1h', hasMidTick: true },
+];
+
+export const AFTERNOON_SLOTS: TimelineSlot[] = [
+  { hour: 13, label: '13:00', endLabel: '14:00', span: 1.0, sub: '下午工時', hasMidTick: true },
+  { hour: 14, label: '14:00', endLabel: '15:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 15, label: '15:00', endLabel: '16:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 16, label: '16:00', endLabel: '17:00', span: 1.0, sub: '+1h', hasMidTick: true },
+  { hour: 17, label: '17:00', endLabel: '17:30', span: 0.5, sub: '+0.5h', hasMidTick: false },
+];
+
+export const OVERTIME_SLOTS: TimelineSlot[] = [
+  { hour: 17.5, label: '17:30', endLabel: '18:00', span: 0.5, sub: '+0.5h', hasMidTick: false, isOvertime: true },
+  { hour: 18, label: '18:00', endLabel: '19:00', span: 1.0, sub: '+1h', hasMidTick: true, isOvertime: true },
+  { hour: 19, label: '19:00', endLabel: '20:00', span: 1.0, sub: '+1h', hasMidTick: true, isOvertime: true },
+  { hour: 20, label: '20:00', endLabel: '21:00', span: 1.0, sub: '+1h', hasMidTick: true, isOvertime: true },
+  { hour: 21, label: '21:00', endLabel: '22:00', span: 1.0, sub: '+1h', hasMidTick: true, isOvertime: true },
 ];
 
 // Collapsed widths for lunch break and overtime periods

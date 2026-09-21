@@ -11,7 +11,9 @@ import {
   END_HOUR,
   COLLAPSED_LUNCH_WIDTH,
   COLLAPSED_OVERTIME_WIDTH,
-  MORNING_SLOTS
+  MORNING_SLOTS,
+  AFTERNOON_SLOTS,
+  OVERTIME_SLOTS
 } from '../constants';
 import { formatHour, calculateTaskHours, formatDateLabel, getDayWidth } from '../utils/time';
 
@@ -333,17 +335,14 @@ export const ContinuousTimelineHeader: React.FC<ContinuousTimelineHeaderProps> =
                     <div
                       key={slot.hour}
                       style={{ width: slot.span * hourWidth }}
-                      className="flex-shrink-0 text-center py-1 border-r border-sky-200 flex flex-col justify-center items-center relative transition-colors bg-sky-50/40 text-sky-800 font-medium group/m85"
+                      className="flex-shrink-0 text-left py-1.5 border-r border-sky-200 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-sky-50/40 text-sky-800 font-medium group/m85"
                       title="08:30 ~ 09:00 上班首半小時 (正常工時 0.5h)"
                     >
                       <div className="flex items-center gap-0.5 leading-none">
                         <span className="text-[11px] font-mono font-bold text-sky-700">08:30</span>
                       </div>
-                      <div className="text-[9px] font-mono text-sky-600 leading-tight">
-                        ~09:00
-                      </div>
-                      <div className="text-[8px] font-mono text-sky-800 font-semibold bg-sky-100 px-1 py-0.2 rounded border border-sky-200 -mt-0.5 scale-90">
-                        0.5h
+                      <div className="text-[10px] font-mono origin-left scale-90 text-sky-600 font-medium">
+                        +0.5h
                       </div>
                     </div>
                   );
@@ -353,12 +352,12 @@ export const ContinuousTimelineHeader: React.FC<ContinuousTimelineHeaderProps> =
                   <div
                     key={slot.hour}
                     style={{ width: slot.span * hourWidth }}
-                    className="flex-shrink-0 text-center py-1.5 border-r border-slate-200/80 flex flex-col justify-center items-center relative transition-colors bg-white text-slate-700 font-medium"
+                    className="flex-shrink-0 text-left py-1.5 border-r border-slate-200/80 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-white text-slate-700 font-medium"
                   >
                     <div className="flex items-baseline gap-0.5">
-                      <span className="text-xs font-mono">{slot.label}</span>
+                      <span className="text-xs font-mono font-semibold">{slot.label}</span>
                     </div>
-                    <div className="text-[10px] font-mono scale-90 text-slate-400">
+                    <div className="text-[10px] font-mono origin-left scale-90 text-slate-400">
                       {slot.sub}
                     </div>
                     {slot.hasMidTick && (
@@ -385,71 +384,40 @@ export const ContinuousTimelineHeader: React.FC<ContinuousTimelineHeaderProps> =
               ) : (
                 <div
                   style={{ width: hourWidth }}
-                  className="flex-shrink-0 text-center py-1.5 border-r border-amber-200/80 flex flex-col justify-center items-center relative transition-colors bg-amber-50/50 text-amber-800 font-medium"
+                  className="flex-shrink-0 text-left py-1.5 border-r border-amber-200/80 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-amber-50/50 text-amber-800 font-medium"
                 >
                   <div className="flex items-baseline gap-0.5">
-                    <span className="text-xs font-mono">{formatHour(12)}</span>
+                    <span className="text-xs font-mono font-semibold">{formatHour(12)}</span>
                   </div>
-                  <div className="text-[10px] font-mono scale-90 text-amber-700 font-semibold">
+                  <div className="text-[10px] font-mono origin-left scale-90 text-amber-700 font-semibold">
                     午休不計
                   </div>
                   <div className="absolute left-1/2 bottom-0 pointer-events-none bg-amber-300/80 w-[1px] h-2" />
                 </div>
               )}
 
-              {/* Afternoon Hours 13, 14, 15, 16, 17 */}
-              {[13, 14, 15, 16, 17].map((hour) => {
-                if (hour === 17) {
+              {/* Afternoon Hours (13:00 - 17:30) */}
+              {AFTERNOON_SLOTS.map((slot) => {
+                if (slot.hour === 17) {
                   return (
                     <div
-                      key={hour}
-                      style={{ width: collapseOvertime ? hourWidth * 0.5 : hourWidth }}
-                      className={`flex-shrink-0 text-center py-1.5 border-r border-slate-200/80 flex relative transition-colors ${
-                        collapseOvertime ? 'bg-white justify-center items-center' : ''
-                      }`}
+                      key={slot.hour}
+                      style={{ width: slot.span * hourWidth }}
+                      className="flex-shrink-0 text-left py-1.5 border-r-2 border-amber-400/80 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-white text-slate-700 font-medium"
+                      title="17:00 ~ 17:30 正常工時 (0.5小時)"
                     >
-                      {/* Left half: 17:00 ~ 17:30 (Normal work hours) */}
-                      <div className={`flex-1 flex flex-col justify-center items-center bg-white text-slate-700 font-medium ${collapseOvertime ? '' : 'pr-1'}`}>
-                        <div className="flex items-baseline gap-0.5">
-                          <span className="text-xs font-mono">17:00</span>
-                        </div>
-                        <div className="text-[10px] font-mono scale-90 text-sky-700 font-semibold">
-                          正常
-                        </div>
+                      <div className="flex items-baseline gap-0.5">
+                        <span className="text-xs font-mono font-semibold">17:00</span>
                       </div>
-
-                      {/* 17:30 dividing line and label */}
-                      {collapseOvertime ? (
+                      <div className="text-[10px] font-mono origin-left scale-90 text-slate-400">
+                        +0.5h
+                      </div>
+                      {collapseOvertime && (
                         <div className="absolute right-0 top-0 bottom-0 flex items-center translate-x-1/2 pointer-events-none z-10">
                           <span className="text-[9px] text-amber-800 bg-amber-100 px-1 py-0.5 rounded border border-amber-300 font-mono shadow-xs">
                             17:30
                           </span>
                         </div>
-                      ) : (
-                        <>
-                          {/* Full height vertical amber divider in the middle (50%) */}
-                          <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500 z-20 pointer-events-none" />
-
-                          {/* 17:30 Badge centered between 17:00 and 18:00 */}
-                          <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 z-20 flex flex-col items-center justify-between py-0.5 pointer-events-none">
-                            <span className="px-1 py-0.2 bg-amber-100 text-amber-900 border border-amber-400 rounded text-[9px] font-mono font-bold shadow-xs whitespace-nowrap">
-                              17:30
-                            </span>
-                            <span className="text-[8px] text-amber-700 font-semibold tracking-tighter whitespace-nowrap">
-                              加班起
-                            </span>
-                          </div>
-
-                          {/* Right half: 17:30 ~ 18:00 (Overtime) */}
-                          <div className="flex-1 flex flex-col justify-center items-center bg-amber-50/50 text-amber-800 font-semibold pl-1">
-                            <div className="text-[10px] font-mono scale-90 text-amber-700 font-semibold">
-                              加班
-                            </div>
-                            <div className="text-[9px] font-mono text-amber-600">
-                              +0.5h
-                            </div>
-                          </div>
-                        </>
                       )}
                     </div>
                   );
@@ -457,46 +425,70 @@ export const ContinuousTimelineHeader: React.FC<ContinuousTimelineHeaderProps> =
 
                 return (
                   <div
-                    key={hour}
-                    style={{ width: hourWidth }}
-                    className="flex-shrink-0 text-center py-1.5 border-r border-slate-200/80 flex flex-col justify-center items-center relative transition-colors bg-white text-slate-700 font-medium"
+                    key={slot.hour}
+                    style={{ width: slot.span * hourWidth }}
+                    className="flex-shrink-0 text-left py-1.5 border-r border-slate-200/80 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-white text-slate-700 font-medium"
                   >
                     <div className="flex items-baseline gap-0.5">
-                      <span className="text-xs font-mono">{formatHour(hour)}</span>
+                      <span className="text-xs font-mono font-semibold">{slot.label}</span>
                     </div>
                     <div
-                      className={`text-[10px] font-mono scale-90 ${
-                        hour === 13 ? 'text-sky-700 font-semibold' : 'text-slate-400'
+                      className={`text-[10px] font-mono origin-left scale-90 ${
+                        slot.hour === 13 ? 'text-sky-700 font-semibold' : 'text-slate-400'
                       }`}
                     >
-                      {hour === 13 ? '下午工時' : '+1h'}
+                      {slot.sub}
                     </div>
-                    <div
-                      className="absolute left-1/2 bottom-0 pointer-events-none bg-slate-300 w-[1px] h-2"
-                      title="30分鐘"
-                    />
+                    {slot.hasMidTick && (
+                      <div
+                        className="absolute left-1/2 bottom-0 pointer-events-none bg-slate-300 w-[1px] h-2"
+                        title="30分鐘"
+                      />
+                    )}
                   </div>
                 );
               })}
 
-              {/* Overtime Hours or Collapsed Strip */}
+              {/* Overtime Hours (17:30 - 22:00) or Collapsed Strip */}
               {collapseOvertime ? null : (
                 <>
-                  {[18, 19, 20, 21].map((hour) => (
-                    <div
-                      key={hour}
-                      style={{ width: hourWidth }}
-                      className="flex-shrink-0 text-center py-1.5 border-r border-amber-200/70 flex flex-col justify-center items-center relative transition-colors bg-amber-50/40 text-amber-800 font-semibold"
-                    >
-                      <div className="flex items-baseline gap-0.5">
-                        <span className="text-xs font-mono">{formatHour(hour)}</span>
+                  {OVERTIME_SLOTS.map((slot) => {
+                    if (slot.hour === 17.5) {
+                      return (
+                        <div
+                          key={slot.hour}
+                          style={{ width: slot.span * hourWidth }}
+                          className="flex-shrink-0 text-left py-1.5 border-r border-amber-300/80 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-amber-50/70 text-amber-800 font-semibold"
+                          title="17:30 ~ 18:00 加班首半小時 (0.5小時)"
+                        >
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-xs font-mono text-amber-900 font-bold">17:30</span>
+                          </div>
+                          <div className="text-[10px] font-mono origin-left scale-90 text-amber-700/80 font-semibold">
+                            +0.5h
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={slot.hour}
+                        style={{ width: slot.span * hourWidth }}
+                        className="flex-shrink-0 text-left py-1.5 border-r border-amber-200/70 flex flex-col justify-center items-start pl-1.5 relative transition-colors bg-amber-50/40 text-amber-800 font-semibold"
+                      >
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-xs font-mono font-bold text-amber-900">{slot.label}</span>
+                        </div>
+                        <div className="text-[10px] font-mono origin-left scale-90 text-amber-700 font-semibold">
+                          加班
+                        </div>
+                        {slot.hasMidTick && (
+                          <div className="absolute left-1/2 bottom-0 pointer-events-none bg-amber-300/80 w-[1px] h-2" />
+                        )}
                       </div>
-                      <div className="text-[10px] font-mono scale-90 text-amber-700 font-semibold">
-                        加班
-                      </div>
-                      <div className="absolute left-1/2 bottom-0 pointer-events-none bg-amber-300/80 w-[1px] h-2" />
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Day boundary end-hour mark (22:00) */}
                   <div className="absolute right-0 top-0 bottom-0 flex items-center translate-x-1/2 pointer-events-none z-10">

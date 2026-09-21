@@ -9,7 +9,9 @@ import {
   COLOR_OPTIONS,
   COLLAPSED_LUNCH_WIDTH,
   COLLAPSED_OVERTIME_WIDTH,
-  MORNING_SLOTS
+  MORNING_SLOTS,
+  AFTERNOON_SLOTS,
+  OVERTIME_SLOTS
 } from '../constants';
 import { calculateTaskHours, assignTracksToTasks, getDayWidth, dayXToHour } from '../utils/time';
 import { TaskBlock } from './TaskBlock';
@@ -203,32 +205,32 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
                 </div>
               )}
 
-              {/* Afternoon Hours 13, 14, 15, 16, 17 */}
-              {[13, 14, 15, 16, 17].map((hour) => (
+              {/* Afternoon Hours (13:00 - 17:30) */}
+              {AFTERNOON_SLOTS.map((slot) => (
                 <div
-                  key={hour}
-                  style={{ width: hour === 17 && collapseOvertime ? hourWidth * 0.5 : hourWidth }}
-                  className="flex-shrink-0 h-full border-r border-slate-200/80 relative bg-white group-hover/projrow:bg-slate-50/40"
+                  key={slot.hour}
+                  style={{ width: slot.span * hourWidth }}
+                  className={`flex-shrink-0 h-full relative bg-white group-hover/projrow:bg-slate-50/40 ${
+                    slot.hour === 17 ? 'border-r-2 border-amber-400/80' : 'border-r border-slate-200/80'
+                  }`}
                 >
-                  <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
-                  {hour === 17 && !collapseOvertime && (
-                    <>
-                      <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-amber-500 z-10 pointer-events-none" />
-                      <div className="absolute left-1/2 right-0 top-0 bottom-0 bg-amber-50/40 pointer-events-none" />
-                    </>
+                  {slot.hasMidTick && (
+                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-slate-200 pointer-events-none" />
                   )}
                 </div>
               ))}
 
-              {/* Overtime Hours or Collapsed Strip */}
+              {/* Overtime Hours (17:30 - 22:00) */}
               {collapseOvertime ? null : (
-                [18, 19, 20, 21].map((hour) => (
+                OVERTIME_SLOTS.map((slot) => (
                   <div
-                    key={hour}
-                    style={{ width: hourWidth }}
+                    key={slot.hour}
+                    style={{ width: slot.span * hourWidth }}
                     className="flex-shrink-0 h-full border-r border-amber-200/60 relative bg-amber-50/30 group-hover/projrow:bg-amber-50/50"
                   >
-                    <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200/60 pointer-events-none" />
+                    {slot.hasMidTick && (
+                      <div className="absolute left-1/2 top-0 bottom-0 w-[1px] border-r border-dashed border-amber-200/60 pointer-events-none" />
+                    )}
                   </div>
                 ))
               )}
