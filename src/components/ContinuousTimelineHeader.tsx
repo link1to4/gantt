@@ -314,10 +314,9 @@ export const ContinuousTimelineHeader: React.FC<ContinuousTimelineHeaderProps> =
         {/* Left header column */}
         <div
           style={{ width: sidebarWidth }}
-          className="flex-shrink-0 px-4 py-2 border-r border-slate-800 bg-slate-900 flex items-center justify-between text-slate-300 font-semibold"
+          className="flex-shrink-0 px-4 py-2 border-r border-slate-800 bg-slate-900 flex items-center text-slate-300 font-semibold"
         >
           <span>專案維度</span>
-          <span className="text-[10px] text-slate-500 font-mono">獨立分列呈現</span>
         </div>
 
         {/* Hourly cells across all days */}

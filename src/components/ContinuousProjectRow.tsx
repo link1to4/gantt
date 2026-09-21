@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, FolderKanban, Copy, Download } from 'lucide-react';
+import { Plus, FolderKanban } from 'lucide-react';
 import { Project, DaySchedule, Task } from '../types';
 import { 
   START_HOUR, 
@@ -122,69 +122,18 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
         style={{ width: sidebarWidth }}
         className="sticky left-0 bg-slate-900/98 border-r border-slate-800 p-3 flex flex-col justify-between z-20 shadow-md backdrop-blur-xs flex-shrink-0"
       >
-        <div>
-          <div className="flex items-center justify-between gap-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorMeta.bg}`} />
-              <span
-                className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
-                title={project.name}
-              >
-                {project.name}
-              </span>
-            </div>
-
-            {/* Quick action buttons: Duplicate & Export */}
-            <div className="flex items-center gap-0.5 flex-shrink-0">
-              {onDuplicateProject && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDuplicateProject(project.id);
-                  }}
-                  className="p-1 rounded text-slate-400 hover:text-indigo-300 hover:bg-slate-800 transition"
-                  title="一鍵複製此專案與所有項目"
-                >
-                  <Copy className="w-3 h-3" />
-                </button>
-              )}
-              {onExportProject && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onExportProject(project.id);
-                  }}
-                  className="p-1 rounded text-slate-400 hover:text-emerald-300 hover:bg-slate-800 transition"
-                  title="匯出專案 JSON 檔案"
-                >
-                  <Download className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Project statistics across all days */}
-          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-slate-400">
-            <span className="bg-slate-800 px-1.5 py-0.2 rounded border border-slate-700/60 font-mono">
-              全期 {totalTasksCount} 項
-            </span>
-            {totalNormalHours > 0 && (
-              <span className="text-sky-400 font-mono">
-                常{totalNormalHours}h
-              </span>
-            )}
-            {totalOvertimeHours > 0 && (
-              <span className="text-amber-400 font-bold font-mono">
-                加{totalOvertimeHours}h
-              </span>
-            )}
-          </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className={`w-3 h-3 rounded-full flex-shrink-0 ${colorMeta.bg}`} />
+          <span
+            className="font-bold text-xs sm:text-sm text-white truncate tracking-tight"
+            title={project.name}
+          >
+            {project.name}
+          </span>
         </div>
 
         {/* Add item button */}
-        <div className="mt-2 pt-1 border-t border-slate-800/60 flex items-center justify-between">
+        <div className="mt-2 pt-1 border-t border-slate-800/60 flex items-center">
           <button
             onClick={() => onAddTaskToDay(days[0]?.id || '', 9, project.id)}
             className="text-[11px] font-medium text-slate-400 hover:text-indigo-300 hover:bg-indigo-950/30 px-1.5 py-0.5 rounded transition flex items-center gap-1"
@@ -193,9 +142,6 @@ export const ContinuousProjectRow: React.FC<ContinuousProjectRowProps> = ({
             <Plus className="w-3 h-3 text-indigo-400" />
             <span>新增項目</span>
           </button>
-          <span className="text-[10px] text-slate-500 font-mono">
-            點格新增
-          </span>
         </div>
       </div>
 
